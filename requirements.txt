@@ -8,3 +8,5 @@ langchain
 chromadb
 sentence-transformers
 python-jose[cryptography]
+langchain
+langchain-community

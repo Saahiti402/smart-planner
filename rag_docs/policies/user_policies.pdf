@@ -1,0 +1,71 @@
+%PDF-1.4
+%‚„œ”
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Count 1 /Kids [5 0 R] >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>
+endobj
+5 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents 6 0 R >>
+endobj
+6 0 obj
+<< /Length 3320 >>
+stream
+BT /F2 17 Tf 1 0 0 1 52 790 Tm (Smart Travel Planning Assistant) Tj ET
+BT /F2 13 Tf 1 0 0 1 52 766 Tm (User Access Control Policy) Tj ET
+BT /F1 10 Tf 1 0 0 1 52 748 Tm (Document Version: 1.0 | Generated: 2026-04-09) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 52 726 Tm (This policy defines how end users interact with the Smart Travel Planning Assistant and) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 52 712 Tm (what protections apply to their account and data.) Tj ET
+BT /F2 11 Tf 1 0 0 1 52 690 Tm (Role Scope) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 674 Tm (- Users interact with the system through the chat interface to ask for suggestions,) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 660 Tm (  compare destinations, and request itineraries.) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 646 Tm (- Users may log in, manage their own session, and access their own conversations,) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 632 Tm (  preferences, trips, and generated itineraries through approved application) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 618 Tm (  screens.) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 604 Tm (- Users receive recommendations through the agent; they do not directly control) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 590 Tm (  backend tools, prompts, or data stores.) Tj ET
+BT /F2 11 Tf 1 0 0 1 52 568 Tm (Available Capabilities) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 552 Tm (- Submit trip-planning questions and receive context-aware recommendations.) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 538 Tm (- Request itinerary generation, destination comparison, and budget-conscious) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 524 Tm (  suggestions through the conversational interface.) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 510 Tm (- Benefit from personalization based on their own saved preferences and travel) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 496 Tm (  history when such features are enabled.) Tj ET
+BT /F2 11 Tf 1 0 0 1 52 474 Tm (Restrictions) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 458 Tm (- Users must not access another person's account, conversations, trips, or) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 444 Tm (  preferences.) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 430 Tm (- Users do not receive direct access to the database, vector store, document) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 416 Tm (  registry, or system configuration.) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 402 Tm (- Users cannot upload administrative documents, modify prompts, manage roles, or) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 388 Tm (  override agent behavior.) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 374 Tm (- Users do not access audit logs, diagnostics, or internal observability data.) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 360 Tm (- Tool execution is indirect and mediated by the application and agent workflow.) Tj ET
+BT /F2 11 Tf 1 0 0 1 52 338 Tm (Security and Privacy) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 322 Tm (- Users are responsible for protecting their login credentials and using the system) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 308 Tm (  only for legitimate travel-planning activity.) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 294 Tm (- The system should expose only the user's own data and should enforce role-based) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 280 Tm (  access controls at all times.) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 266 Tm (- User activity may be logged for reliability, security monitoring, and service) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 252 Tm (  improvement within the project scope.) Tj ET
+endstream
+endobj
+xref
+0 7
+0000000000 65535 f 
+0000000015 00000 n 
+0000000064 00000 n 
+0000000121 00000 n 
+0000000191 00000 n 
+0000000266 00000 n 
+0000000402 00000 n 
+trailer
+<< /Size 7 /Root 1 0 R >>
+startxref
+3774
+%%EOF

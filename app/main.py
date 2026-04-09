@@ -22,6 +22,8 @@ from app.auth import (
     create_access_token
 )
 from app.auth import get_current_user
+from app.services.langchain_service import query_travel_assistant
+from app.models import Conversation
 
 app = FastAPI(title="Smart Travel Planner Backend")
 
@@ -272,4 +274,54 @@ def get_preferences(
         "preferred_trip_type": preference.preferred_trip_type,
         "food_preference": preference.food_preference,
         "preferred_climate": preference.preferred_climate
+    }
+
+@app.get("/ask-travel")
+def ask_travel(
+    query: str,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    role = current_user["role"]
+
+    response = query_travel_assistant(query, role)
+
+    conversation = Conversation(
+        user_id=uuid.UUID(current_user["sub"]),
+        user_message=query,
+        assistant_response=response["answer"],
+        tool_used="langchain_retriever"
+    )
+
+    db.add(conversation)
+    db.commit()
+
+    return response
+
+@app.get("/conversations")
+def get_conversations(
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    conversations = db.query(Conversation).filter(
+        Conversation.user_id == uuid.UUID(current_user["sub"])
+    ).order_by(
+        Conversation.created_at.desc()
+    ).all()
+
+    response = []
+
+    for convo in conversations:
+        response.append({
+            "id": str(convo.id),
+            "session_id": str(convo.session_id),
+            "user_message": convo.user_message,
+            "assistant_response": convo.assistant_response,
+            "tool_used": convo.tool_used,
+            "created_at": convo.created_at.isoformat()
+        })
+
+    return {
+        "total_conversations": len(response),
+        "conversations": response
     }

@@ -1,0 +1,78 @@
+%PDF-1.4
+%‚„œ”
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Count 1 /Kids [5 0 R] >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>
+endobj
+5 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents 6 0 R >>
+endobj
+6 0 obj
+<< /Length 3941 >>
+stream
+BT /F2 17 Tf 1 0 0 1 52 790 Tm (Smart Travel Planning Assistant) Tj ET
+BT /F2 13 Tf 1 0 0 1 52 766 Tm (Admin Access Control Policy) Tj ET
+BT /F1 10 Tf 1 0 0 1 52 748 Tm (Document Version: 1.0 | Generated: 2026-04-09) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 52 726 Tm (This policy defines the access, responsibilities, and security guardrails for) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 52 712 Tm (administrators of the Smart Travel Planning Assistant.) Tj ET
+BT /F2 11 Tf 1 0 0 1 52 690 Tm (Access Scope) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 674 Tm (- Full administrative access to the FastAPI backend, Streamlit interface, PostgreSQL) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 660 Tm (  records, and FAISS-backed document management workflow.) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 646 Tm (- Full control over user and role administration, including role assignment,) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 632 Tm (  password reset support, and session revocation.) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 618 Tm (- Full visibility into conversations, preferences, trips, itineraries, document) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 604 Tm (  metadata, and role access policies.) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 590 Tm (- Full access to observability data such as logs, traces, system health checks, and) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 576 Tm (  troubleshooting details.) Tj ET
+BT /F2 11 Tf 1 0 0 1 52 554 Tm (Permitted Actions) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 538 Tm (- Create, update, disable, or reactivate user accounts and manage role-based access) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 524 Tm (  control.) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 510 Tm (- Upload, activate, deactivate, and classify travel documents used by the RAG) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 496 Tm (  pipeline.) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 482 Tm (- Manage document access rules and review retrieval permissions for each role.) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 468 Tm (- Configure prompts, agent settings, tool availability, and approved planning) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 454 Tm (  workflows.) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 440 Tm (- Review planning quality, investigate failures, and run operational diagnostics for) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 426 Tm (  the system.) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 412 Tm (- Export approved administrative reports when needed for project review or) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 398 Tm (  troubleshooting.) Tj ET
+BT /F2 11 Tf 1 0 0 1 52 376 Tm (Restrictions and Guardrails) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 360 Tm (- Administrative access must be used only for project operations, maintenance,) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 346 Tm (  debugging, or approved academic review.) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 332 Tm (- Sensitive user data must not be copied, shared, or exported outside the project) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 318 Tm (  workflow unless explicitly authorized.) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 304 Tm (- Direct changes to database records, prompts, or document access policies must) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 290 Tm (  remain auditable and justified.) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 276 Tm (- Administrators must follow least-privilege practice when delegating work to travel) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 262 Tm (  agents or exposing tools to users.) Tj ET
+BT /F2 11 Tf 1 0 0 1 52 240 Tm (Audit and Accountability) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 224 Tm (- All administrative actions should be logged, including authentication events,) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 210 Tm (  policy changes, document actions, and configuration updates.) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 196 Tm (- Admins are responsible for enforcing access control, reviewing unusual activity,) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 182 Tm (  and responding to security incidents.) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 168 Tm (- Observability systems such as LangSmith traces and application logs may be used) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 154 Tm (  for debugging and accountability.) Tj ET
+endstream
+endobj
+xref
+0 7
+0000000000 65535 f 
+0000000015 00000 n 
+0000000064 00000 n 
+0000000121 00000 n 
+0000000191 00000 n 
+0000000266 00000 n 
+0000000402 00000 n 
+trailer
+<< /Size 7 /Root 1 0 R >>
+startxref
+4395
+%%EOF

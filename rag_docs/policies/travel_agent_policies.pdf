@@ -1,0 +1,75 @@
+%PDF-1.4
+%‚„œ”
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Count 1 /Kids [5 0 R] >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>
+endobj
+5 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents 6 0 R >>
+endobj
+6 0 obj
+<< /Length 3695 >>
+stream
+BT /F2 17 Tf 1 0 0 1 52 790 Tm (Smart Travel Planning Assistant) Tj ET
+BT /F2 13 Tf 1 0 0 1 52 766 Tm (Travel Agent Access Control Policy) Tj ET
+BT /F1 10 Tf 1 0 0 1 52 748 Tm (Document Version: 1.0 | Generated: 2026-04-09) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 52 726 Tm (This policy defines the planning authority and restrictions for travel agents who assist) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 52 712 Tm (users through the Smart Travel Planning Assistant.) Tj ET
+BT /F2 11 Tf 1 0 0 1 52 690 Tm (Role Scope) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 674 Tm (- Travel agents support trip planning, itinerary generation, destination comparison,) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 660 Tm (  and budget-aware recommendations through approved application workflows.) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 646 Tm (- Travel agents may log in, manage their own session, and use planning features) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 632 Tm (  exposed by the system.) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 618 Tm (- Travel agents may access user planning context only when it is needed to assist) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 604 Tm (  with an active user request.) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 590 Tm (- Travel agents may query authorized travel knowledge sources through the) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 576 Tm (  application's RAG and tool interfaces.) Tj ET
+BT /F2 11 Tf 1 0 0 1 52 554 Tm (Permitted Actions) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 538 Tm (- Generate travel plans and day-by-day itineraries for valid user requests.) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 524 Tm (- Use planning tools such as retrieval, comparison, budget optimization, and) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 510 Tm (  itinerary generation when those tools are enabled by admins.) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 496 Tm (- View planning-related user details required for assistance, including relevant) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 482 Tm (  preferences, prior trips, and current conversation context.) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 468 Tm (- Use planning dashboards and planning endpoints that are explicitly assigned to the) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 454 Tm (  travel-agent role.) Tj ET
+BT /F2 11 Tf 1 0 0 1 52 432 Tm (Restrictions) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 416 Tm (- Travel agents must not create or modify roles, system configuration, prompts,) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 402 Tm (  model settings, or document access policies.) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 388 Tm (- Travel agents must not access unrestricted diagnostics, raw administrative logs,) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 374 Tm (  or full observability data.) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 360 Tm (- Travel agents must not perform direct database administration or direct FAISS) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 346 Tm (  index management.) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 332 Tm (- Travel agents must not export sensitive user data except through approved) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 318 Tm (  application functions.) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 304 Tm (- Travel agents must not access user data that is unrelated to the request they are) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 290 Tm (  handling.) Tj ET
+BT /F2 11 Tf 1 0 0 1 52 268 Tm (Privacy and Audit) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 252 Tm (- All planning actions and tool usage should be recorded for accountability.) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 238 Tm (- Travel agents may be given limited visibility into their own operational traces) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 224 Tm (  when the application supports it.) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 210 Tm (- User data must be handled only for legitimate planning support and kept within the) Tj ET
+BT /F1 10.5 Tf 1 0 0 1 66 196 Tm (  project environment.) Tj ET
+endstream
+endobj
+xref
+0 7
+0000000000 65535 f 
+0000000015 00000 n 
+0000000064 00000 n 
+0000000121 00000 n 
+0000000191 00000 n 
+0000000266 00000 n 
+0000000402 00000 n 
+trailer
+<< /Size 7 /Root 1 0 R >>
+startxref
+4149
+%%EOF

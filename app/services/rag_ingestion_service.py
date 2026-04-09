@@ -3,7 +3,7 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 
 def load_and_chunk_documents():
-    docs_path = Path(__file__).resolve().parents[2] / "rag_docs"
+    docs_path = Path(_file_).resolve().parents[2] / "rag_docs"
 
     splitter = RecursiveCharacterTextSplitter(
         chunk_size=500,

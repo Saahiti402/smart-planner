@@ -2,28 +2,29 @@ from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
 from datetime import datetime
 import uuid
-from app.models import UserPreference
-from app.schemas import UserPreferenceSchema
+
 from app.database import engine, Base, get_db
-from app.models import User, Trip, Itinerary
+from app.models import (
+    User,
+    Trip,
+    Itinerary,
+    UserPreference,
+    Conversation
+)
 from app.schemas import (
     UserRegisterSchema,
     UserLoginSchema,
-    TripPlanSchema
+    TripPlanSchema,
+    UserPreferenceSchema
 )
-from app.services.itinerary_service import generate_itinerary
+from app.auth import hash_password, verify_password
 from app.services.rag_ingestion_service import load_and_chunk_documents
-from app.services.vector_store_service import semantic_search
-from app.services.agent_service import travel_planning_agent
-from app.services.vector_store_service import rebuild_vector_store
-from app.auth import (
-    hash_password,
-    verify_password,
-    create_access_token
+from app.services.vector_store_service import (
+    semantic_search,
+    rebuild_vector_store
 )
-from app.auth import get_current_user
+from app.services.agent_service import travel_planning_agent
 from app.services.langchain_service import query_travel_assistant
-from app.models import Conversation
 
 app = FastAPI(title="Smart Travel Planner Backend")
 
@@ -38,12 +39,22 @@ def home():
     return {"message": "Smart Travel Planner backend is running"}
 
 
+# ---------------- USER AUTH ----------------
+
 @app.post("/register")
-def register_user(user_data: UserRegisterSchema, db: Session = Depends(get_db)):
-    existing_user = db.query(User).filter(User.email == user_data.email).first()
+def register_user(
+    user_data: UserRegisterSchema,
+    db: Session = Depends(get_db)
+):
+    existing_user = db.query(User).filter(
+        User.email == user_data.email
+    ).first()
 
     if existing_user:
-        raise HTTPException(status_code=400, detail="Email already registered")
+        raise HTTPException(
+            status_code=400,
+            detail="Email already registered"
+        )
 
     new_user = User(
         full_name=user_data.full_name,
@@ -59,12 +70,16 @@ def register_user(user_data: UserRegisterSchema, db: Session = Depends(get_db)):
     return {
         "message": "User registered successfully",
         "user_id": str(new_user.id),
-        "email": new_user.email
+        "email": new_user.email,
+        "role": new_user.role
     }
 
 
 @app.post("/login")
-def login_user(user_data: UserLoginSchema, db: Session = Depends(get_db)):
+def login_user(
+    user_data: UserLoginSchema,
+    db: Session = Depends(get_db)
+):
     user = db.query(User).filter(
         User.email == user_data.email
     ).first()
@@ -84,32 +99,21 @@ def login_user(user_data: UserLoginSchema, db: Session = Depends(get_db)):
             detail="Invalid password"
         )
 
-    token = create_access_token({
-        "sub": str(user.id),
-        "role": user.role
-    })
-
     return {
         "message": "Login successful",
-        "access_token": token,
-        "token_type": "bearer",
+        "user_id": str(user.id),
+        "email": user.email,
         "role": user.role
     }
 
 
+# ---------------- TRIP PLANNING ----------------
+
 @app.post("/plan-trip")
 def plan_trip(
     trip_data: TripPlanSchema,
-    current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    # Ensure token user matches request user
-    if current_user["sub"] != trip_data.user_id:
-        raise HTTPException(
-            status_code=403,
-            detail="Unauthorized trip access"
-        )
-
     user = db.query(User).filter(
         User.id == uuid.UUID(trip_data.user_id)
     ).first()
@@ -141,7 +145,6 @@ def plan_trip(
     db.commit()
     db.refresh(new_trip)
 
-    # RAG-powered agent call
     generated_itinerary, recommendations, decision_log = (
         travel_planning_agent(trip_data)
     )
@@ -166,6 +169,9 @@ def plan_trip(
         "agent_decision": decision_log
     }
 
+
+# ---------------- RAG ----------------
+
 @app.get("/test-rag-chunks")
 def test_rag_chunks():
     chunks = load_and_chunk_documents()
@@ -175,29 +181,28 @@ def test_rag_chunks():
         "sample_chunk": chunks[:2]
     }
 
+
 @app.post("/store-rag")
 def store_rag():
     return rebuild_vector_store()
+
 
 @app.get("/search-rag")
 def search_rag(query: str, role: str):
     return semantic_search(query, role)
 
+
+# ---------------- USER PREFERENCES ----------------
+
 @app.post("/save-preferences")
 def save_preferences(
     preference_data: UserPreferenceSchema,
-    current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    # Security check
-    if current_user["sub"] != preference_data.user_id:
-        raise HTTPException(
-            status_code=403,
-            detail="Unauthorized access"
-        )
-
     existing_pref = db.query(UserPreference).filter(
-        UserPreference.user_id == uuid.UUID(preference_data.user_id)
+        UserPreference.user_id == uuid.UUID(
+            preference_data.user_id
+        )
     ).first()
 
     if existing_pref:
@@ -244,18 +249,12 @@ def save_preferences(
         "message": "Preferences saved successfully"
     }
 
+
 @app.get("/my-preferences/{user_id}")
 def get_preferences(
     user_id: str,
-    current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    if current_user["sub"] != user_id:
-        raise HTTPException(
-            status_code=403,
-            detail="Unauthorized access"
-        )
-
     preference = db.query(UserPreference).filter(
         UserPreference.user_id == uuid.UUID(user_id)
     ).first()
@@ -276,18 +275,32 @@ def get_preferences(
         "preferred_climate": preference.preferred_climate
     }
 
+
+# ---------------- NATURAL LANGUAGE QUERY ----------------
+
 @app.get("/ask-travel")
 def ask_travel(
     query: str,
-    current_user: dict = Depends(get_current_user),
+    user_id: str,
     db: Session = Depends(get_db)
 ):
-    role = current_user["role"]
+    user = db.query(User).filter(
+        User.id == uuid.UUID(user_id)
+    ).first()
 
-    response = query_travel_assistant(query, role)
+    if not user:
+        raise HTTPException(
+            status_code=404,
+            detail="User not found"
+        )
+
+    response = query_travel_assistant(
+        query,
+        user.role
+    )
 
     conversation = Conversation(
-        user_id=uuid.UUID(current_user["sub"]),
+        user_id=user.id,
         user_message=query,
         assistant_response=response["answer"],
         tool_used="langchain_retriever"
@@ -298,13 +311,14 @@ def ask_travel(
 
     return response
 
+
 @app.get("/conversations")
 def get_conversations(
-    current_user: dict = Depends(get_current_user),
+    user_id: str,
     db: Session = Depends(get_db)
 ):
     conversations = db.query(Conversation).filter(
-        Conversation.user_id == uuid.UUID(current_user["sub"])
+        Conversation.user_id == uuid.UUID(user_id)
     ).order_by(
         Conversation.created_at.desc()
     ).all()

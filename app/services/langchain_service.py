@@ -24,42 +24,29 @@ class TravelRetriever(BaseRetriever):
         return docs
 
 
-def query_travel_assistant(query: str, role: str = "user"):
-    restricted_keywords = [
-        "margin",
-        "profit",
-        "vendor cost",
-        "selling price",
-        "internal pricing"
-    ]
+# =========================================================
+# 👤 USER 4: KEYWORDS (CONFIG SECTION)
+# =========================================================
 
-    if role != "admin" and any(
-        keyword in query.lower()
-        for keyword in restricted_keywords
-    ):
-        return {
-            "query": query,
-            "answer": (
-                "This pricing or margin information is restricted "
-                "and available only to admin users."
-            )
-        }
+ADMIN_ONLY_KEYWORDS = [
+    "margin",
+    "profit",
+    "vendor cost",
+    "selling price",
+    "internal pricing",
+    "policy rules",
+    "access roles"
+]
 
-    retriever = TravelRetriever(role=role)
-
-    docs = retriever.invoke(query)
-
-    if not docs:
-        return {
-            "query": query,
-            "answer": "No relevant travel information found."
-        }
-
-    context = "\n\n".join(
-        [doc.page_content for doc in docs[:3]]
-    )
-
-    return {
-        "query": query,
-        "answer": f"Based on travel knowledge:\n{context}"
-    }
+OPERATIONAL_KEYWORDS = [
+    "supplier discount",
+    "supplier discounts",
+    "vendor rate",
+    "vendor rates",
+    "negotiated rate",
+    "negotiated rates",
+    "discount percentage",
+    "hotel partner cost",
+    "supplier pricing",
+    "package pricing"
+]

@@ -3,7 +3,7 @@ from sentence_transformers import SentenceTransformer
 
 from app.services.rag_ingestion_service import load_and_chunk_documents
 
-# Load embedding model
+
 model = SentenceTransformer("all-MiniLM-L6-v2")
 
 client = PersistentClient(path="chroma_db")
@@ -15,7 +15,7 @@ def get_collection():
 
 
 def rebuild_vector_store():
-    # delete old collection if it exists
+
     existing_collections = client.list_collections()
     existing_names = [c.name for c in existing_collections]
 
@@ -61,11 +61,11 @@ def semantic_search(query: str, role: str):
     documents = results["documents"][0]
     metadatas = results["metadatas"][0]
 
-    # ✅ Clean loop (no merge conflict, no indentation issues)
+  
     for doc, metadata in zip(documents, metadatas):
         allowed_roles = metadata.get("allowed_roles", [])
 
-        # Role-based filtering
+     
         if role not in allowed_roles:
             continue
 

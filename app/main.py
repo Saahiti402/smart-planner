@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Depends, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from datetime import datetime
 import uuid
@@ -27,6 +28,15 @@ from app.services.agent_service import travel_planning_agent
 from app.services.langchain_service import query_travel_assistant
 
 app = FastAPI(title="Smart Travel Planner Backend")
+
+# ---------------- CORS FIX ----------------
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],   # allow all origins for local testing
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.on_event("startup")

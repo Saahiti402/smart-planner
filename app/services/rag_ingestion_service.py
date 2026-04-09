@@ -24,9 +24,13 @@ def load_and_chunk_documents():
             # default access for public docs
             allowed_roles = ["admin", "travel_agent", "user"]
 
-            # restrict confidential folders
-            if folder_name in ["policies", "pricing"]:
+            # admin-only confidential policy docs
+            if folder_name == "policies":
                 allowed_roles = ["admin"]
+
+            # admin + agent operational pricing docs
+            elif folder_name == "pricing":
+                allowed_roles = ["admin", "travel_agent"]
 
             chunk_data = {
                 "text": chunk,

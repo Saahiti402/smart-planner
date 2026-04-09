@@ -117,5 +117,31 @@ def query_travel_assistant(
     # Step 4: Return final response
     return {
         "query": query,
-        "answer": f"Based on travel knowledge:\n{context}"
+        "answer": extract_relevant_answer(query, context)
     }
+
+
+def extract_relevant_answer(query: str, context: str) -> str:
+    stop_words = {
+        "what", "is", "the", "are", "of", "a", "an", "in", "for",
+        "to", "how", "much", "does", "do", "tell", "me", "about",
+        "please", "give", "show", "list", "find", "get", "i", "want"
+    }
+    query_keywords = set(query.lower().split()) - stop_words
+
+    lines = [line.strip() for line in context.splitlines() if line.strip()]
+
+    scored = []
+    for line in lines:
+        line_lower = line.lower()
+        score = sum(1 for kw in query_keywords if kw in line_lower)
+        if score > 0:
+            scored.append((score, line))
+
+    scored.sort(key=lambda x: x[0], reverse=True)
+
+    if scored:
+        top_lines = [line for _, line in scored[:3]]
+        return "\n".join(top_lines)
+
+    return "\n".join(lines[:3])

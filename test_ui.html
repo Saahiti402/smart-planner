@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Smart Travel Planner — Service Tester</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0f1117;
+      --card: #1a1d27;
+      --border: #2a2d3d;
+      --accent: #6c63ff;
+      --accent2: #00d4aa;
+      --text: #e2e4f0;
+      --muted: #888aaa;
+      --success: #22c55e;
+      --error: #ef4444;
+      --warn: #f59e0b;
+      --input-bg: #12141e;
+    }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* ── Sidebar ── */
+    aside {
+      width: 220px;
+      min-width: 220px;
+      background: var(--card);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 20px 0;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+    }
+    aside h1 {
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      color: var(--accent);
+      padding: 0 20px 16px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 12px;
+    }
+    aside nav button {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      background: none;
+      border: none;
+      color: var(--muted);
+      padding: 10px 20px;
+      text-align: left;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all .15s;
+      border-left: 3px solid transparent;
+    }
+    aside nav button:hover { color: var(--text); background: rgba(108,99,255,.08); }
+    aside nav button.active { color: var(--accent); border-left-color: var(--accent); background: rgba(108,99,255,.12); }
+    aside nav button .badge {
+      margin-left: auto;
+      font-size: 10px;
+      background: rgba(108,99,255,.25);
+      color: var(--accent);
+      padding: 2px 6px;
+      border-radius: 10px;
+    }
+
+    /* User bar */
+    .token-bar {
+      margin-top: auto;
+      padding: 14px 16px;
+      border-top: 1px solid var(--border);
+      font-size: 11px;
+    }
+    .token-bar label { color: var(--muted); display: block; margin-bottom: 4px; }
+    .token-preview {
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px 8px;
+      font-size: 10px;
+      color: var(--accent2);
+      word-break: break-all;
+      max-height: 48px;
+      overflow: hidden;
+    }
+    .token-dot {
+      display: inline-block;
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--error);
+      margin-right: 4px;
+    }
+    .token-dot.ok { background: var(--success); }
+
+    /* ── Main content ── */
+    main {
+      flex: 1;
+      padding: 28px 32px;
+      overflow-y: auto;
+    }
+
+    /* ── Panel ── */
+    .panel { display: none; }
+    .panel.active { display: block; }
+
+    .panel-header {
+      margin-bottom: 24px;
+    }
+    .panel-header h2 {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .panel-header p {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+    .service-tag {
+      display: inline-block;
+      font-size: 10px;
+      background: rgba(0,212,170,.12);
+      color: var(--accent2);
+      border: 1px solid rgba(0,212,170,.25);
+      padding: 2px 8px;
+      border-radius: 20px;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .card h3 {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 14px;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .method {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 4px;
+      letter-spacing: .04em;
+    }
+    .method.GET  { background: rgba(34,197,94,.15);  color: #22c55e; }
+    .method.POST { background: rgba(108,99,255,.2);   color: #a78bfa; }
+
+    /* ── Form elements ── */
+    .form-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+    .form-group { display: flex; flex-direction: column; gap: 5px; }
+    .form-group label { font-size: 11px; color: var(--muted); font-weight: 500; letter-spacing: .03em; }
+    .form-group input,
+    .form-group select {
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 8px 10px;
+      border-radius: 6px;
+      font-size: 13px;
+      outline: none;
+      transition: border-color .15s;
+    }
+    .form-group input:focus,
+    .form-group select:focus { border-color: var(--accent); }
+    .form-group select option { background: var(--card); }
+
+    /* ── Buttons ── */
+    .btn {
+      padding: 9px 18px;
+      border-radius: 7px;
+      border: none;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { background: #7c74ff; }
+    .btn-secondary { background: transparent; border: 1px solid var(--border); color: var(--text); }
+    .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-danger { background: transparent; border: 1px solid var(--error); color: var(--error); }
+    .btn-danger:hover { background: rgba(239,68,68,.1); }
+    .btn:disabled { opacity: .5; cursor: not-allowed; }
+
+    /* ── Response box ── */
+    .response-box {
+      margin-top: 14px;
+      display: none;
+    }
+    .response-box.visible { display: block; }
+    .response-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .status-pill {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 9px;
+      border-radius: 20px;
+    }
+    .status-pill.ok  { background: rgba(34,197,94,.15);  color: var(--success); }
+    .status-pill.err { background: rgba(239,68,68,.15);  color: var(--error); }
+    .response-time { font-size: 11px; color: var(--muted); margin-left: auto; }
+    pre.json-out {
+      background: #0a0c14;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px;
+      font-size: 12px;
+      line-height: 1.6;
+      overflow-x: auto;
+      max-height: 420px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      color: #c4cfed;
+    }
+
+    /* ── Spinner ── */
+    .spinner {
+      display: inline-block;
+      width: 14px; height: 14px;
+      border: 2px solid rgba(108,99,255,.3);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin .6s linear infinite;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Divider ── */
+    hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+
+    /* ── Tabs inside panel ── */
+    .sub-tabs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+    .sub-tab {
+      padding: 6px 14px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      font-size: 12px;
+      cursor: pointer;
+      background: none;
+      color: var(--muted);
+      transition: all .15s;
+    }
+    .sub-tab.active { background: rgba(108,99,255,.15); border-color: var(--accent); color: var(--accent); }
+    .sub-panel { display: none; }
+    .sub-panel.active { display: block; }
+
+    /* syntax highlight helpers */
+    .json-key   { color: #7aa6da; }
+    .json-str   { color: #b5e8a3; }
+    .json-num   { color: #f7c36b; }
+    .json-bool  { color: #f97583; }
+    .json-null  { color: #888; }
+  </style>
+</head>
+<body>
+
+<!-- ════════════════════ SIDEBAR ════════════════════ -->
+<aside>
+  <h1>Service Tester</h1>
+  <nav id="sidebar-nav">
+    <button class="active" onclick="showPanel('auth')">
+      🔐 Auth
+    </button>
+    <button onclick="showPanel('rag-ingestion')">
+      📄 RAG Ingestion
+      <span class="badge">svc</span>
+    </button>
+    <button onclick="showPanel('vector-store')">
+      🔍 Vector Store
+      <span class="badge">svc</span>
+    </button>
+    <button onclick="showPanel('itinerary')">
+      🗺️ Itinerary
+      <span class="badge">svc</span>
+    </button>
+    <button onclick="showPanel('agent')">
+      🤖 Agent
+      <span class="badge">svc</span>
+    </button>
+    <button onclick="showPanel('langchain')">
+      💬 LangChain
+      <span class="badge">svc</span>
+    </button>
+    <button onclick="showPanel('conversations')">
+      📋 Conversations
+    </button>
+  </nav>
+
+  <div class="token-bar">
+    <label><span class="token-dot" id="token-dot"></span> Logged in as</label>
+    <div class="token-preview" id="token-preview">Not logged in</div>
+  </div>
+</aside>
+
+<!-- ════════════════════ MAIN ════════════════════ -->
+<main>
+
+  <!-- ──────────── AUTH ──────────── -->
+  <section class="panel active" id="panel-auth">
+    <div class="panel-header">
+      <div class="service-tag">Authentication</div>
+      <h2>Register &amp; Login</h2>
+      <p>Create an account or log in. User ID and role are auto-saved and used across all tabs.</p>
+    </div>
+
+    <!-- Register -->
+    <div class="card">
+      <h3><span class="method POST">POST</span> /register</h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label>FULL NAME</label>
+          <input id="reg-name" type="text" placeholder="John Doe" value="Test User" />
+        </div>
+        <div class="form-group">
+          <label>EMAIL</label>
+          <input id="reg-email" type="email" placeholder="john@example.com" value="testuser@example.com" />
+        </div>
+        <div class="form-group">
+          <label>PASSWORD</label>
+          <input id="reg-password" type="password" placeholder="••••••••" value="password123" />
+        </div>
+        <div class="form-group">
+          <label>ROLE</label>
+          <select id="reg-role">
+            <option value="user" selected>user</option>
+            <option value="travel_agent">travel_agent</option>
+            <option value="admin">admin</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="callRegister()">Register</button>
+      <div class="response-box" id="res-register"></div>
+    </div>
+
+    <!-- Login -->
+    <div class="card">
+      <h3><span class="method POST">POST</span> /login</h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label>EMAIL</label>
+          <input id="login-email" type="email" placeholder="john@example.com" value="testuser@example.com" />
+        </div>
+        <div class="form-group">
+          <label>PASSWORD</label>
+          <input id="login-password" type="password" placeholder="••••••••" value="password123" />
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="callLogin()">Login &amp; Save User</button>
+      <div class="response-box" id="res-login"></div>
+    </div>
+  </section>
+
+  <!-- ──────────── RAG INGESTION ──────────── -->
+  <section class="panel" id="panel-rag-ingestion">
+    <div class="panel-header">
+      <div class="service-tag">rag_ingestion_service.py</div>
+      <h2>RAG Ingestion Service</h2>
+      <p>Tests <code>load_and_chunk_documents()</code> — loads .txt files from <code>rag_docs/</code>, splits into chunks, and applies RBAC metadata.</p>
+    </div>
+
+    <div class="card">
+      <h3><span class="method GET">GET</span> /test-rag-chunks — Preview chunks</h3>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:12px;">Calls <code>load_and_chunk_documents()</code> and returns total count + 2 sample chunks. No auth needed.</p>
+      <button class="btn btn-primary" onclick="callTestRagChunks()">Load &amp; Preview Chunks</button>
+      <div class="response-box" id="res-rag-chunks"></div>
+    </div>
+
+    <div class="card">
+      <h3><span class="method POST">POST</span> /store-rag — Rebuild Vector Store</h3>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:12px;">Calls <code>rebuild_vector_store()</code> — deletes old ChromaDB collection, re-embeds all chunks using <code>all-MiniLM-L6-v2</code>.</p>
+      <button class="btn btn-primary" onclick="callStoreRag()">Rebuild Vector Store</button>
+      <div class="response-box" id="res-store-rag"></div>
+    </div>
+  </section>
+
+  <!-- ──────────── VECTOR STORE ──────────── -->
+  <section class="panel" id="panel-vector-store">
+    <div class="panel-header">
+      <div class="service-tag">vector_store_service.py</div>
+      <h2>Vector Store Service</h2>
+      <p>Tests <code>semantic_search(query, role)</code> and <code>get_destination_context()</code>. Results are RBAC-filtered by role.</p>
+    </div>
+
+    <div class="card">
+      <h3><span class="method GET">GET</span> /search-rag — Semantic Search</h3>
+      <div class="form-row">
+        <div class="form-group" style="grid-column: span 2;">
+          <label>SEARCH QUERY</label>
+          <input id="vs-query" type="text" placeholder="e.g. beach hotels in Goa" value="best places to visit in Goa" />
+        </div>
+        <div class="form-group">
+          <label>ROLE (RBAC filter)</label>
+          <select id="vs-role">
+            <option value="user" selected>user</option>
+            <option value="travel_agent">travel_agent</option>
+            <option value="admin">admin</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="callSearchRag()">Run Semantic Search</button>
+      <div class="response-box" id="res-search-rag"></div>
+    </div>
+
+    <!-- Role comparison -->
+    <div class="card">
+      <h3>🧪 RBAC Role Comparison Test</h3>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:12px;">Runs the same query for all three roles to verify access control. Tests admin-only (policies) and agent-level (pricing) restrictions.</p>
+      <div class="form-group" style="margin-bottom:12px;">
+        <label>TEST QUERY</label>
+        <input id="vs-rbac-query" type="text" value="internal pricing margin profit" />
+      </div>
+      <button class="btn btn-secondary" onclick="callRbacTest()">Run RBAC Comparison</button>
+      <div class="response-box" id="res-rbac"></div>
+    </div>
+  </section>
+
+  <!-- ──────────── ITINERARY ──────────── -->
+  <section class="panel" id="panel-itinerary">
+    <div class="panel-header">
+      <div class="service-tag">itinerary_service.py</div>
+      <h2>Itinerary Service</h2>
+      <p>Tests <code>generate_itinerary(source, destination, start_date, end_date, budget, travelers, context)</code> — builds day-by-day plan with budget breakdown. Requires login.</p>
+    </div>
+
+    <div class="card">
+      <h3><span class="method POST">POST</span> /plan-trip — Generate Itinerary</h3>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:12px;">Requires JWT token. The itinerary is stored in the DB and returned.</p>
+      <div class="form-row">
+        <div class="form-group">
+          <label>USER ID (from login)</label>
+          <input id="it-userid" type="text" placeholder="auto-filled from login" />
+        </div>
+        <div class="form-group">
+          <label>SOURCE LOCATION</label>
+          <input id="it-source" type="text" value="Mumbai" />
+        </div>
+        <div class="form-group">
+          <label>DESTINATION</label>
+          <input id="it-dest" type="text" value="Goa" />
+        </div>
+        <div class="form-group">
+          <label>START DATE</label>
+          <input id="it-start" type="date" value="2026-05-01" />
+        </div>
+        <div class="form-group">
+          <label>END DATE</label>
+          <input id="it-end" type="date" value="2026-05-05" />
+        </div>
+        <div class="form-group">
+          <label>BUDGET (₹)</label>
+          <input id="it-budget" type="number" value="50000" />
+        </div>
+        <div class="form-group">
+          <label>TRAVELERS COUNT</label>
+          <input id="it-travelers" type="number" value="2" />
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="callPlanTrip()">Generate Itinerary</button>
+      <div class="response-box" id="res-plan-trip"></div>
+    </div>
+  </section>
+
+  <!-- ──────────── AGENT ──────────── -->
+  <section class="panel" id="panel-agent">
+    <div class="panel-header">
+      <div class="service-tag">agent_service.py</div>
+      <h2>Travel Planning Agent</h2>
+      <p>Tests <code>travel_planning_agent(trip_data)</code> — orchestrates RAG context retrieval + user preferences + itinerary generation. This is the full pipeline. Requires login.</p>
+    </div>
+
+    <!-- Save preferences first -->
+    <div class="card">
+      <h3>Step 1 — Save User Preferences (optional)</h3>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:12px;">The agent reads saved preferences from DB to personalize the trip. Requires JWT token.</p>
+      <div class="form-row">
+        <div class="form-group">
+          <label>USER ID</label>
+          <input id="ag-pref-userid" type="text" placeholder="auto-filled from login" />
+        </div>
+        <div class="form-group">
+          <label>TRIP TYPE</label>
+          <select id="ag-trip-type">
+            <option value="adventure">adventure</option>
+            <option value="leisure" selected>leisure</option>
+            <option value="business">business</option>
+            <option value="cultural">cultural</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>TRANSPORT</label>
+          <select id="ag-transport">
+            <option value="flight" selected>flight</option>
+            <option value="train">train</option>
+            <option value="car">car</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>HOTEL TYPE</label>
+          <select id="ag-hotel">
+            <option value="3-star" selected>3-star</option>
+            <option value="4-star">4-star</option>
+            <option value="5-star">5-star</option>
+            <option value="budget">budget</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>FOOD PREFERENCE</label>
+          <select id="ag-food">
+            <option value="veg" selected>veg</option>
+            <option value="non-veg">non-veg</option>
+            <option value="vegan">vegan</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>CLIMATE</label>
+          <select id="ag-climate">
+            <option value="tropical" selected>tropical</option>
+            <option value="cold">cold</option>
+            <option value="moderate">moderate</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>BUDGET MIN (₹)</label>
+          <input id="ag-bmin" type="number" value="20000" />
+        </div>
+        <div class="form-group">
+          <label>BUDGET MAX (₹)</label>
+          <input id="ag-bmax" type="number" value="80000" />
+        </div>
+      </div>
+      <button class="btn btn-secondary" onclick="callSavePreferences()">Save Preferences</button>
+      <div class="response-box" id="res-save-pref"></div>
+    </div>
+
+    <!-- Plan trip via agent -->
+    <div class="card">
+      <h3>Step 2 — Run Agent: Plan Trip</h3>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:12px;">Uses <code>/plan-trip</code> which internally calls <code>travel_planning_agent()</code>. The agent selects tools, fetches RAG context, loads preferences, and builds the itinerary.</p>
+      <div class="form-row">
+        <div class="form-group">
+          <label>USER ID</label>
+          <input id="ag-userid" type="text" placeholder="auto-filled from login" />
+        </div>
+        <div class="form-group">
+          <label>SOURCE</label>
+          <input id="ag-source" type="text" value="Bangalore" />
+        </div>
+        <div class="form-group">
+          <label>DESTINATION</label>
+          <input id="ag-dest" type="text" value="Mysore" />
+        </div>
+        <div class="form-group">
+          <label>START DATE</label>
+          <input id="ag-start" type="date" value="2026-06-01" />
+        </div>
+        <div class="form-group">
+          <label>END DATE</label>
+          <input id="ag-end" type="date" value="2026-06-03" />
+        </div>
+        <div class="form-group">
+          <label>BUDGET (₹)</label>
+          <input id="ag-budget" type="number" value="30000" />
+        </div>
+        <div class="form-group">
+          <label>TRAVELERS</label>
+          <input id="ag-travelers" type="number" value="2" />
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="callAgentTrip()">Run Agent &rarr; Plan Trip</button>
+      <div class="response-box" id="res-agent-trip"></div>
+    </div>
+  </section>
+
+  <!-- ──────────── LANGCHAIN ──────────── -->
+  <section class="panel" id="panel-langchain">
+    <div class="panel-header">
+      <div class="service-tag">langchain_service.py</div>
+      <h2>LangChain Travel Assistant</h2>
+      <p>Tests <code>query_travel_assistant(query, role)</code> — uses <code>TravelRetriever</code> (LangChain BaseRetriever) backed by ChromaDB. Applies RBAC keyword filtering before retrieval. Requires login.</p>
+    </div>
+
+    <div class="card">
+      <h3><span class="method GET">GET</span> /ask-travel — Travel Q&amp;A</h3>
+      <div class="form-row">
+        <div class="form-group" style="grid-column: span 3;">
+          <label>YOUR QUESTION</label>
+          <input id="lc-query" type="text" placeholder="Ask anything about travel destinations..." value="What are the best places to visit in Bangalore?" />
+        </div>
+      </div>
+      <p style="font-size:11px;color:var(--muted);margin-bottom:10px;">Role is taken from your logged-in account automatically. Current role: <span id="lc-role-display" style="color:var(--accent2)">not logged in</span></p>
+      <button class="btn btn-primary" onclick="callAskTravel()">Ask Travel Assistant</button>
+      <div class="response-box" id="res-ask-travel"></div>
+    </div>
+
+    <!-- RBAC keyword tests -->
+    <div class="card">
+      <h3>🧪 RBAC Keyword Restriction Tests</h3>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:12px;">Quick-test queries that should be blocked for user/agent roles:</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+        <button class="btn btn-secondary" onclick="setLcQuery('What is the profit margin on Goa packages?')">Admin-only: margin</button>
+        <button class="btn btn-secondary" onclick="setLcQuery('Show me supplier discounts for hotels')">Agent-only: supplier discount</button>
+        <button class="btn btn-secondary" onclick="setLcQuery('Tell me about Mysore palace and tourism')">Allowed: destination info</button>
+        <button class="btn btn-secondary" onclick="setLcQuery('What are the hotel partner costs?')">Agent-only: hotel cost</button>
+      </div>
+      <p style="font-size:11px;color:var(--muted);">Fill query above and click "Ask Travel Assistant".</p>
+    </div>
+  </section>
+
+  <!-- ──────────── CONVERSATIONS ──────────── -->
+  <section class="panel" id="panel-conversations">
+    <div class="panel-header">
+      <div class="service-tag">LangChain + DB</div>
+      <h2>Conversation History</h2>
+      <p>Fetches all stored Q&amp;A conversations for the logged-in user. Requires JWT token.</p>
+    </div>
+
+    <div class="card">
+      <h3><span class="method GET">GET</span> /conversations</h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label>USER ID</label>
+          <input id="conv-userid" type="text" placeholder="auto-filled from login" />
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="callConversations()">Fetch Conversations</button>
+      <div class="response-box" id="res-conversations"></div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ════════════════════ SCRIPT ════════════════════ -->
+<script>
+  const BASE_URL = 'http://localhost:8001';
+  let currentUserId = null;
+  let currentUserRole = 'user';
+
+  // ── Navigation ──
+  function showPanel(name) {
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('aside nav button').forEach(b => b.classList.remove('active'));
+    document.getElementById('panel-' + name).classList.add('active');
+    event.currentTarget.classList.add('active');
+  }
+
+  // ── User session ──
+  function saveUser(userId, role, email) {
+    currentUserId = userId;
+    currentUserRole = role;
+    const dot = document.getElementById('token-dot');
+    const preview = document.getElementById('token-preview');
+    dot.className = 'token-dot ok';
+    preview.textContent = email + ' (' + role + ')';
+
+    // Auto-fill user ID fields
+    ['it-userid', 'ag-userid', 'ag-pref-userid', 'conv-userid'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = userId;
+    });
+
+    // Update role display in LangChain tab
+    const roleDisplay = document.getElementById('lc-role-display');
+    if (roleDisplay) roleDisplay.textContent = role;
+  }
+
+  // ── API helper ──
+  async function apiFetch(method, path, body, responseBoxId) {
+    const box = document.getElementById(responseBoxId);
+    box.className = 'response-box visible';
+    box.innerHTML = `<div class="response-header"><span class="spinner"></span><span style="font-size:12px;color:var(--muted)">Calling ${BASE_URL + path}…</span></div>`;
+
+    const headers = { 'Content-Type': 'application/json' };
+
+    const t0 = performance.now();
+    let status = null;
+    let data = null;
+
+    try {
+      let url = BASE_URL + path;
+      let options = { method, headers };
+      if (body && method !== 'GET') options.body = JSON.stringify(body);
+      if (body && method === 'GET') {
+        const params = new URLSearchParams(body);
+        url += '?' + params.toString();
+      }
+
+      const res = await fetch(url, options);
+      status = res.status;
+      data = await res.json();
+    } catch (e) {
+      box.innerHTML = `
+        <div class="response-header">
+          <span class="status-pill err">NETWORK ERROR</span>
+          <span class="response-time">Is the backend running at ${BASE_URL}?</span>
+        </div>
+        <pre class="json-out">${e.message}</pre>`;
+      return null;
+    }
+
+    const elapsed = Math.round(performance.now() - t0);
+    const ok = status >= 200 && status < 300;
+
+    box.innerHTML = `
+      <div class="response-header">
+        <span class="status-pill ${ok ? 'ok' : 'err'}">${status} ${ok ? 'OK' : 'ERROR'}</span>
+        <span class="response-time">${elapsed} ms</span>
+      </div>
+      <pre class="json-out">${syntaxHighlight(JSON.stringify(data, null, 2))}</pre>`;
+
+    return { status, data, ok };
+  }
+
+  // ── Syntax highlight ──
+  function syntaxHighlight(json) {
+    return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, match => {
+      let cls = 'json-num';
+      if (/^"/.test(match)) {
+        cls = /:$/.test(match) ? 'json-key' : 'json-str';
+      } else if (/true|false/.test(match)) {
+        cls = 'json-bool';
+      } else if (/null/.test(match)) {
+        cls = 'json-null';
+      }
+      return `<span class="${cls}">${match}</span>`;
+    });
+  }
+
+  // ═══ AUTH ═══
+  async function callRegister() {
+    const result = await apiFetch('POST', '/register', {
+      full_name: document.getElementById('reg-name').value,
+      email: document.getElementById('reg-email').value,
+      password: document.getElementById('reg-password').value,
+      role: document.getElementById('reg-role').value,
+    }, 'res-register');
+    if (result && result.ok && result.data.user_id) {
+      saveUser(result.data.user_id, result.data.role, document.getElementById('reg-email').value);
+    }
+  }
+
+  async function callLogin() {
+    const email = document.getElementById('login-email').value;
+    const result = await apiFetch('POST', '/login', {
+      email,
+      password: document.getElementById('login-password').value,
+    }, 'res-login');
+    if (result && result.ok && result.data.user_id) {
+      saveUser(result.data.user_id, result.data.role, email);
+    }
+  }
+
+  // ═══ RAG INGESTION ═══
+  async function callTestRagChunks() {
+    await apiFetch('GET', '/test-rag-chunks', null, 'res-rag-chunks');
+  }
+
+  async function callStoreRag() {
+    await apiFetch('POST', '/store-rag', null, 'res-store-rag');
+  }
+
+  // ═══ VECTOR STORE ═══
+  async function callSearchRag() {
+    const query = document.getElementById('vs-query').value;
+    const role = document.getElementById('vs-role').value;
+    await apiFetch('GET', `/search-rag?query=${encodeURIComponent(query)}&role=${role}`, null, 'res-search-rag');
+  }
+
+  async function callRbacTest() {
+    const query = document.getElementById('vs-rbac-query').value;
+    const box = document.getElementById('res-rbac');
+    box.className = 'response-box visible';
+    box.innerHTML = `<div class="response-header"><span class="spinner"></span><span style="font-size:12px;color:var(--muted)">Testing 3 roles…</span></div>`;
+
+    const roles = ['user', 'travel_agent', 'admin'];
+    const results = {};
+
+    for (const role of roles) {
+      const res = await fetch(`${BASE_URL}/search-rag?query=${encodeURIComponent(query)}&role=${role}`);
+      const data = await res.json();
+      results[role] = { count: data.results?.length ?? 0, results: data.results };
+    }
+
+    box.innerHTML = `
+      <div class="response-header">
+        <span class="status-pill ok">RBAC COMPARISON</span>
+      </div>
+      <pre class="json-out">${syntaxHighlight(JSON.stringify(results, null, 2))}</pre>`;
+  }
+
+  // ═══ ITINERARY ═══
+  async function callPlanTrip() {
+    const userId = document.getElementById('it-userid').value;
+    if (!userId) { alert('Login first to get a User ID'); return; }
+    await apiFetch('POST', '/plan-trip', {
+      user_id: userId,
+      source_location: document.getElementById('it-source').value,
+      destination: document.getElementById('it-dest').value,
+      start_date: document.getElementById('it-start').value,
+      end_date: document.getElementById('it-end').value,
+      budget: parseInt(document.getElementById('it-budget').value),
+      travelers_count: parseInt(document.getElementById('it-travelers').value),
+    }, 'res-plan-trip');
+  }
+
+  // ═══ AGENT ═══
+  async function callSavePreferences() {
+    const userId = document.getElementById('ag-pref-userid').value;
+    if (!userId) { alert('Login first to get a User ID'); return; }
+    await apiFetch('POST', '/save-preferences', {
+      user_id: userId,
+      preferred_trip_type: document.getElementById('ag-trip-type').value,
+      preferred_transport: document.getElementById('ag-transport').value,
+      preferred_hotel_type: document.getElementById('ag-hotel').value,
+      food_preference: document.getElementById('ag-food').value,
+      preferred_climate: document.getElementById('ag-climate').value,
+      budget_min: parseInt(document.getElementById('ag-bmin').value),
+      budget_max: parseInt(document.getElementById('ag-bmax').value),
+    }, 'res-save-pref');
+  }
+
+  async function callAgentTrip() {
+    const userId = document.getElementById('ag-userid').value;
+    if (!userId) { alert('Login first to get a User ID'); return; }
+    await apiFetch('POST', '/plan-trip', {
+      user_id: userId,
+      source_location: document.getElementById('ag-source').value,
+      destination: document.getElementById('ag-dest').value,
+      start_date: document.getElementById('ag-start').value,
+      end_date: document.getElementById('ag-end').value,
+      budget: parseInt(document.getElementById('ag-budget').value),
+      travelers_count: parseInt(document.getElementById('ag-travelers').value),
+    }, 'res-agent-trip');
+  }
+
+  // ═══ LANGCHAIN ═══
+  function setLcQuery(q) {
+    document.getElementById('lc-query').value = q;
+  }
+
+  async function callAskTravel() {
+    const query = document.getElementById('lc-query').value;
+    const uid = currentUserId ? `&user_id=${currentUserId}` : '';
+    await apiFetch('GET', `/ask-travel?query=${encodeURIComponent(query)}&role=${currentUserRole}${uid}`, null, 'res-ask-travel');
+  }
+
+  // ═══ CONVERSATIONS ═══
+  async function callConversations() {
+    const userId = document.getElementById('conv-userid').value;
+    if (!userId) { alert('Enter a User ID or login first'); return; }
+    await apiFetch('GET', `/conversations?user_id=${userId}`, null, 'res-conversations');
+  }
+</script>
+</body>
+</html>

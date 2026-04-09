@@ -61,10 +61,11 @@ def semantic_search(query: str, role: str):
     documents = results["documents"][0]
     metadatas = results["metadatas"][0]
 
+    # ✅ Clean loop (no merge conflict, no indentation issues)
     for doc, metadata in zip(documents, metadatas):
         allowed_roles = metadata.get("allowed_roles", [])
 
-        # RBAC filter only
+        # Role-based filtering
         if role not in allowed_roles:
             continue
 

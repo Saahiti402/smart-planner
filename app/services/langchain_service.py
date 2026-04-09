@@ -50,3 +50,31 @@ OPERATIONAL_KEYWORDS = [
     "supplier pricing",
     "package pricing"
 ]
+# =========================================================
+# 👤 USER 2: ACCESS CONTROL LOGIC
+# =========================================================
+
+def check_access(query: str, role: str):
+    query_lower = query.lower()
+
+    # user restriction for admin-only
+    if role != "admin" and any(
+        keyword in query_lower
+        for keyword in ADMIN_ONLY_KEYWORDS
+    ):
+        return (
+            "This information is restricted and available "
+            "only to admin users."
+        )
+
+    # user restriction for admin + agent
+    if role == "user" and any(
+        keyword in query_lower
+        for keyword in OPERATIONAL_KEYWORDS
+    ):
+        return (
+            "This operational pricing information is restricted "
+            "and not available for user access."
+        )
+
+    return None

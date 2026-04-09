@@ -25,6 +25,26 @@ class TravelRetriever(BaseRetriever):
 
 
 def query_travel_assistant(query: str, role: str = "user"):
+    restricted_keywords = [
+        "margin",
+        "profit",
+        "vendor cost",
+        "selling price",
+        "internal pricing"
+    ]
+
+    if role != "admin" and any(
+        keyword in query.lower()
+        for keyword in restricted_keywords
+    ):
+        return {
+            "query": query,
+            "answer": (
+                "This pricing or margin information is restricted "
+                "and available only to admin users."
+            )
+        }
+
     retriever = TravelRetriever(role=role)
 
     docs = retriever.invoke(query)

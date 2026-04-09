@@ -78,3 +78,37 @@ def check_access(query: str, role: str):
         )
 
     return None
+
+# =========================================================
+# 👤 USER 3: MAIN FUNCTION (QUERY HANDLER)
+# =========================================================
+
+def query_travel_assistant(query: str, role: str = "user"):
+    # Step 1: Access Control
+    restriction = check_access(query, role)
+    if restriction:
+        return {
+            "query": query,
+            "answer": restriction
+        }
+
+    # Step 2: Retrieval
+    retriever = TravelRetriever(role=role)
+    docs = retriever.invoke(query)
+
+    if not docs:
+        return {
+            "query": query,
+            "answer": "No relevant travel information found."
+        }
+
+    # Step 3: Context Building
+    context = "\n\n".join(
+        [doc.page_content for doc in docs[:3]]
+    )
+
+    # Step 4: Final Response
+    return {
+        "query": query,
+        "answer": f"Based on travel knowledge:\n{context}"
+    }

@@ -1,0 +1,11 @@
+Mysore Hotels Guide
+
+Public Details:
+- Royal Heritage Inn: 3-star, near Mysore Palace, ₹3,800/night
+- Garden Residency: 4-star, family friendly, ₹5,500/night
+- Palace Crown Suites: 5-star, premium stay, ₹8,900/night
+
+Amenities:
+- Free breakfast
+- Guided city tours
+- Cab booking

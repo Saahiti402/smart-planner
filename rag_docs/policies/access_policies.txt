@@ -1,0 +1,14 @@
+Admin:
+- Full access
+- Can view all trips
+- Can manage users
+
+Travel Agent:
+- Can create itineraries
+- Can modify trip plans
+- Can access pricing tools
+
+User:
+- Can create own trips
+- Can view own history
+- Cannot modify global policies

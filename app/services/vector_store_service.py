@@ -61,13 +61,12 @@ def semantic_search(query: str, role: str):
     documents = results["documents"][0]
     metadatas = results["metadatas"][0]
 
+    # ✅ CORRECT LOOP
     for doc, metadata in zip(documents, metadatas):
         allowed_roles = metadata.get("allowed_roles", [])
 
+        # Role-based filtering
         if role not in allowed_roles:
-            continue
-
-        if query.lower() not in doc.lower() and role != "admin":
             continue
 
         filtered_results.append({
@@ -80,6 +79,7 @@ def semantic_search(query: str, role: str):
         "role": role,
         "results": filtered_results
     }
+
 
 def get_destination_context(destination: str, role: str = "user"):
     result = semantic_search(destination, role)

@@ -8,6 +8,10 @@ client = Groq(
 
 
 def ask_groq_llm(query: str) -> str:
+    """
+    Basic Groq LLM call for general travel queries.
+    Used as fallback when RAG does not provide relevant results.
+    """
     try:
         response = client.chat.completions.create(
             model="llama-3.3-70b-versatile",
@@ -30,16 +34,18 @@ def ask_groq_llm(query: str) -> str:
 
         return response.choices[0].message.content
 
-    except Exception:
+    except Exception as e:
         return (
-            "Sorry, I am unable to fetch travel guidance right now. "
-            "Please try again in a moment."
+            f"Sorry, I am unable to fetch travel guidance right now. "
+            f"Error: {str(e)}"
         )
 
 
 def ask_groq_llm_with_context(query: str, context: str) -> str:
-    """Call Groq LLM with RAG context. Uses context if relevant,
-    falls back to general knowledge otherwise."""
+    """
+    Context-aware Groq LLM call.
+    Uses RAG context if relevant, otherwise falls back to general knowledge.
+    """
     try:
         response = client.chat.completions.create(
             model="llama-3.3-70b-versatile",
@@ -50,8 +56,8 @@ def ask_groq_llm_with_context(query: str, context: str) -> str:
                         "You are a smart travel planning assistant. "
                         "You have access to a travel knowledge base provided below. "
                         "Use the context if it is relevant to the question. "
-                        "If the context is not relevant to the question, "
-                        "answer from your general travel knowledge. "
+                        "If the context is not relevant, answer from your "
+                        "general travel knowledge. "
                         "Always give clear, helpful, and accurate travel advice."
                     )
                 },
@@ -68,8 +74,8 @@ def ask_groq_llm_with_context(query: str, context: str) -> str:
 
         return response.choices[0].message.content
 
-    except Exception:
+    except Exception as e:
         return (
-            "Sorry, I am unable to fetch travel guidance right now. "
-            "Please try again in a moment."
+            f"Sorry, I am unable to fetch travel guidance right now. "
+            f"Error: {str(e)}"
         )

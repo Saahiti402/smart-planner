@@ -4,8 +4,6 @@ from sqlalchemy.orm import Session
 from datetime import datetime
 from app.services.budget_service import optimize_budget
 import uuid
-
-
 from app.database import engine, Base, get_db
 from app.models import (
     User,

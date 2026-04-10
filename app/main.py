@@ -1,13 +1,13 @@
+import uuid
+from datetime import datetime
+
+from dotenv import load_dotenv
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
-from datetime import datetime
+
 from app.services.budget_service import optimize_budget
-import uuid
 from app.services.groq_llm_service import ask_llm
-from app.services.budget_service import optimize_budget
-from dotenv import load_dotenv
-import os
 
 load_dotenv()
 
@@ -32,9 +32,13 @@ from app.services.vector_store_service import (
     semantic_search,
     rebuild_vector_store
 )
+from app.routers.agent_tools import router as agent_tools_router
 from app.services.agent_service import travel_planning_agent
+from app.services.langchain_service import query_travel_assistant
 
 app = FastAPI(title="Smart Travel Planner Backend")
+
+app.include_router(agent_tools_router)
 
 # ---------------- CORS FIX ----------------
 app.add_middleware(
@@ -305,6 +309,40 @@ def get_preferences(
         "food_preference": preference.food_preference,
         "preferred_climate": preference.preferred_climate
     }
+
+
+@app.get("/ask-travel")
+def ask_travel(
+    query: str,
+    user_id: str,
+    db: Session = Depends(get_db)
+):
+    user = db.query(User).filter(
+        User.id == uuid.UUID(user_id)
+    ).first()
+
+    if not user:
+        raise HTTPException(
+            status_code=404,
+            detail="User not found"
+        )
+
+    response = query_travel_assistant(
+        query,
+        user.role
+    )
+
+    conversation = Conversation(
+        user_id=user.id,
+        user_message=query,
+        assistant_response=response["answer"],
+        tool_used=response.get("source", "travel_assistant")
+    )
+
+    db.add(conversation)
+    db.commit()
+
+    return response
 
 
 @app.get("/conversations")

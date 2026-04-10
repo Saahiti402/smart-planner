@@ -2,6 +2,7 @@ from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from datetime import datetime
+from app.services.budget_service import optimize_budget
 import uuid
 
 from app.database import engine, Base, get_db
@@ -327,3 +328,18 @@ def get_conversations(
         "total_conversations": len(response),
         "conversations": response
     }
+
+# ---------------- BUDGET OPTIMIZATION ----------------
+@app.post("/optimize-budget")
+def optimize_budget_api(data: dict):
+
+    result = optimize_budget(
+        destination=data["destination"],
+        total_budget=data["budget"],
+        travelers=data.get("travelers", 1),
+        trip_days=data.get("trip_days", 1),
+        preferred_transport=data.get("preferred_transport", "flight"),
+        hotel_category=data.get("hotel_category", "3-star")
+    )
+
+    return result

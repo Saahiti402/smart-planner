@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from app.services.budget_service import optimize_budget
 from app.services.groq_llm_service import ask_llm
 
+
 load_dotenv()
 
 from app.database import engine, Base, get_db

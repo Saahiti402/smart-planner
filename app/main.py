@@ -351,11 +351,13 @@ def get_conversations(
         "conversations": response
     }
 
-#budget optimization:
+
+# ---------------- BUDGET OPTIMIZATION ----------------
 @app.post("/optimize-budget")
 def optimize_budget_api(data: dict):
 
     result = optimize_budget(
+        destination=data["destination"],
         total_budget=data["budget"],
         travelers=data.get("travelers", 1),
         trip_days=data.get("trip_days", 1),

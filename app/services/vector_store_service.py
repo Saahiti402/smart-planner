@@ -15,7 +15,6 @@ def get_collection():
 
 
 def rebuild_vector_store():
-
     existing_collections = client.list_collections()
     existing_names = [c.name for c in existing_collections]
 
@@ -29,15 +28,20 @@ def rebuild_vector_store():
     for chunk in chunks:
         embedding = model.encode(chunk["text"]).tolist()
 
+        metadata = chunk["metadata"]
+
+        # NEW SAFE ID FORMAT
+        chunk_id = (
+            f'{metadata["city"]}_'
+            f'{metadata["source"]}_'
+            f'{metadata["chunk_id"]}'
+        )
+
         collection.add(
             documents=[chunk["text"]],
             embeddings=[embedding],
-            metadatas=[chunk["metadata"]],
-            ids=[
-                f'{chunk["metadata"]["folder"]}_'
-                f'{chunk["metadata"]["source"]}_'
-                f'{chunk["metadata"]["chunk_id"]}'
-            ]
+            metadatas=[metadata],
+            ids=[chunk_id]
         )
 
     return {
@@ -61,11 +65,9 @@ def semantic_search(query: str, role: str):
     documents = results["documents"][0]
     metadatas = results["metadatas"][0]
 
-  
     for doc, metadata in zip(documents, metadatas):
         allowed_roles = metadata.get("allowed_roles", [])
 
-     
         if role not in allowed_roles:
             continue
 
@@ -88,5 +90,5 @@ def get_destination_context(destination: str, role: str = "user"):
         return ""
 
     return "\n".join(
-        [doc["text"] for doc in result["results"][:2]]
+        [doc["text"] for doc in result["results"][:3]]
     )

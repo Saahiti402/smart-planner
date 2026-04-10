@@ -1,0 +1,35 @@
+=== CITY: GOA ===
+Public Pricing:
+- Final package price: INR 18500
+- Discount offer: INR 17999
+- 3 day trip price: INR 16500
+Internal Pricing (ADMIN ONLY):
+- Vendor cost: INR 14000
+- Selling price: INR 18500
+- Margin: INR 4500
+- Supplier hotel rate: INR 4800
+- Transport vendor cost: INR 2000
+
+=== CITY: MYSORE ===
+Public Pricing:
+- Final package price: INR 12000
+- Discount offer: INR 11499
+- 3 day trip price: INR 10999
+Internal Pricing (ADMIN ONLY):
+- Vendor cost: INR 9000
+- Selling price: INR 12000
+- Margin: INR 3000
+- Supplier hotel rate: INR 3500
+- Transport vendor cost: INR 1500
+
+=== CITY: CHENNAI ===
+Public Pricing:
+- Final package price: INR 13800
+- Discount offer: INR 12999
+- 3 day trip price: INR 12500
+Internal Pricing (ADMIN ONLY):
+- Vendor cost: INR 10500
+- Selling price: INR 13800
+- Margin: INR 3300
+- Supplier hotel rate: INR 3800
+- Transport vendor cost: INR 1800

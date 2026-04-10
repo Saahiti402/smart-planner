@@ -1,9 +1,109 @@
-from langchain_core.documents import Document
-from langchain_core.retrievers import BaseRetriever
+import re
 from typing import List
 
-from app.services.vector_store_service import semantic_search
+from langchain_core.documents import Document
+from langchain_core.retrievers import BaseRetriever
 
+from app.services.vector_store_service import semantic_search
+from app.services.groq_llm_service import ask_groq_llm
+
+
+# =========================================================
+# ACCESS KEYWORDS
+# =========================================================
+
+ADMIN_ONLY_KEYWORDS = [
+    "vendor",
+    "vendor cost",
+    "margin",
+    "profit",
+    "selling price",
+    "transport vendor cost",
+]
+
+ADMIN_AGENT_KEYWORDS = [
+    "supplier",
+    "supplier cost",
+    "supplier hotel rate",
+    "hotel rate",
+]
+
+PUBLIC_PRICING_KEYWORDS = [
+    "final package price",
+    "package price",
+    "discount offer",
+    "trip price",
+    "budget",
+    "cost of trip",
+]
+
+PUBLIC_TRAVEL_KEYWORDS = [
+    "itinerary",
+    "places to visit",
+    "best time",
+    "popular attractions",
+    "hotel",
+    "destination",
+    "food",
+    "travel guide",
+]
+
+
+# =========================================================
+# HELPERS
+# =========================================================
+
+def contains_keywords(query: str, keywords: List[str]) -> bool:
+    query_lower = query.lower()
+    return any(keyword in query_lower for keyword in keywords)
+
+
+def is_admin_only_query(query: str) -> bool:
+    return contains_keywords(query, ADMIN_ONLY_KEYWORDS)
+
+
+def is_admin_agent_query(query: str) -> bool:
+    return contains_keywords(query, ADMIN_AGENT_KEYWORDS)
+
+
+def is_internal_query(query: str) -> bool:
+    return (
+        is_admin_only_query(query)
+        or is_admin_agent_query(query)
+    )
+
+
+def check_access(query: str, role: str):
+    # admin → full access
+    if role == "admin":
+        return None
+
+    # agent → allow supplier cost
+    if role == "travel_agent":
+        if is_admin_only_query(query):
+            return (
+                "Access denied: vendor cost and margin data "
+                "are restricted to admin users only."
+            )
+
+        return None
+
+    # user → block both admin + agent internal
+    if role == "user":
+        if is_internal_query(query):
+            return (
+                "Access denied: internal pricing and supplier "
+                "data are restricted to authorized roles only."
+            )
+
+        return None
+
+    return None
+
+
+# =========================================================
+# RETRIEVER
+# =========================================================
 
 class TravelRetriever(BaseRetriever):
     role: str = "user"
@@ -25,61 +125,115 @@ class TravelRetriever(BaseRetriever):
 
 
 # =========================================================
-# ACCESS CONTROL KEYWORDS
+# ANSWER EXTRACTION
 # =========================================================
 
-ADMIN_ONLY_KEYWORDS = [
-    "margin",
-    "profit",
-    "vendor cost",
-    "selling price",
-    "internal pricing",
-    "policy rules",
-    "access roles"
-]
-
-OPERATIONAL_KEYWORDS = [
-    "supplier discount",
-    "supplier discounts",
-    "vendor rate",
-    "vendor rates",
-    "negotiated rate",
-    "negotiated rates",
-    "discount percentage",
-    "hotel partner cost",
-    "supplier pricing",
-    "package pricing"
-]
-
-
-# =========================================================
-# ACCESS CONTROL LOGIC
-# =========================================================
-
-def check_access(query: str, role: str):
+def extract_relevant_answer(query: str, docs: List[Document]) -> str:
     query_lower = query.lower()
 
-    # admin-only restriction
-    if role != "admin" and any(
-        keyword in query_lower
-        for keyword in ADMIN_ONLY_KEYWORDS
-    ):
-        return (
-            "This information is restricted and available "
-            "only to admin users."
+    if not docs:
+        return "No relevant information found."
+
+    full_text = "\n\n".join([doc.page_content for doc in docs])
+
+    lines = [
+        line.strip()
+        for line in full_text.splitlines()
+        if line.strip()
+    ]
+
+    # ALL cities
+    if "all cities" in query_lower or "all" in query_lower:
+        relevant_lines = [
+            line for line in lines
+            if any(
+                keyword in line.lower()
+                for keyword in [
+                    "final package price",
+                    "vendor cost",
+                    "margin",
+                    "selling price",
+                    "discount offer",
+                    "supplier hotel rate"
+                ]
+            )
+        ]
+
+        if relevant_lines:
+            return "\n".join(relevant_lines)
+
+    # vendor
+    if "vendor cost" in query_lower:
+        vendor_lines = [
+            line for line in lines
+            if "vendor cost" in line.lower()
+        ]
+        if vendor_lines:
+            return "\n".join(vendor_lines)
+
+    # supplier
+    if "supplier" in query_lower:
+        supplier_lines = [
+            line for line in lines
+            if "supplier" in line.lower()
+        ]
+        if supplier_lines:
+            return "\n".join(supplier_lines)
+
+    # margin
+    if "margin" in query_lower:
+        vendor_match = re.search(
+            r"vendor cost:\s*inr\s*(\d+)",
+            full_text.lower()
         )
 
-    # admin + agent restriction
-    if role == "user" and any(
-        keyword in query_lower
-        for keyword in OPERATIONAL_KEYWORDS
-    ):
-        return (
-            "This operational pricing information is restricted "
-            "and not available for user access."
+        selling_match = re.search(
+            r"(selling price|final package price):\s*inr\s*(\d+)",
+            full_text.lower()
         )
 
-    return None
+        if vendor_match and selling_match:
+            vendor = int(vendor_match.group(1))
+            selling = int(selling_match.group(2))
+            margin = selling - vendor
+
+            return (
+                f"Margin: INR {margin}\n"
+                f"Vendor Cost: INR {vendor}\n"
+                f"Selling Price: INR {selling}"
+            )
+
+    # final package price
+    if "final package price" in query_lower:
+        final_price_lines = [
+            line for line in lines
+            if "final package price" in line.lower()
+        ]
+
+        if final_price_lines:
+            return "\n".join(final_price_lines)
+
+    # city specific
+    city_keywords = [
+        "goa",
+        "mysore",
+        "chennai",
+        "bangalore",
+        "mumbai",
+        "delhi"
+    ]
+
+    for city in city_keywords:
+        if city in query_lower:
+            city_lines = [
+                line for line in lines
+                if city in line.lower()
+            ]
+
+            if city_lines:
+                return "\n".join(city_lines[:10])
+
+    return "\n".join(lines[:10])
 
 
 # =========================================================
@@ -90,58 +244,38 @@ def query_travel_assistant(
     query: str,
     role: str = "user"
 ):
-    # Step 1: Access Control
     restriction = check_access(query, role)
 
     if restriction:
         return {
             "query": query,
-            "answer": restriction
+            "answer": restriction,
+            "source": "access_control"
         }
 
-    # Step 2: Retrieve relevant docs
     retriever = TravelRetriever(role=role)
     docs = retriever.invoke(query)
 
-    if not docs:
+    if docs:
+        answer = extract_relevant_answer(query, docs)
+
         return {
             "query": query,
-            "answer": "No relevant travel information found."
+            "answer": answer,
+            "source": "rag"
         }
 
-    # Step 3: Build response context
-    context = "\n\n".join(
-        [doc.page_content for doc in docs[:3]]
-    )
+    if is_internal_query(query):
+        return {
+            "query": query,
+            "answer": "No internal data found in knowledge base.",
+            "source": "rag"
+        }
 
-    # Step 4: Return final response
+    llm_answer = ask_groq_llm(query)
+
     return {
         "query": query,
-        "answer": extract_relevant_answer(query, context)
+        "answer": llm_answer,
+        "source": "groq_llm"
     }
-
-
-def extract_relevant_answer(query: str, context: str) -> str:
-    stop_words = {
-        "what", "is", "the", "are", "of", "a", "an", "in", "for",
-        "to", "how", "much", "does", "do", "tell", "me", "about",
-        "please", "give", "show", "list", "find", "get", "i", "want"
-    }
-    query_keywords = set(query.lower().split()) - stop_words
-
-    lines = [line.strip() for line in context.splitlines() if line.strip()]
-
-    scored = []
-    for line in lines:
-        line_lower = line.lower()
-        score = sum(1 for kw in query_keywords if kw in line_lower)
-        if score > 0:
-            scored.append((score, line))
-
-    scored.sort(key=lambda x: x[0], reverse=True)
-
-    if scored:
-        top_lines = [line for _, line in scored[:3]]
-        return "\n".join(top_lines)
-
-    return "\n".join(lines[:3])

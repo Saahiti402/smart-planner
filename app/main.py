@@ -4,10 +4,11 @@ from sqlalchemy.orm import Session
 from datetime import datetime
 from app.services.budget_service import optimize_budget
 import uuid
-from app.services.groq_llm_service import ask_llm
+from app.services.groq_llm_service import ask_groq_llm as ask_llm
 from app.services.budget_service import optimize_budget
 from dotenv import load_dotenv
 import os
+
 
 load_dotenv()
 

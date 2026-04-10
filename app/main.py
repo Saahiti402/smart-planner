@@ -2,6 +2,7 @@ from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from datetime import datetime
+from app.services.budget_service import optimize_budget
 import uuid
 from app.services.groq_llm_service import ask_llm
 from app.services.budget_service import optimize_budget
@@ -22,7 +23,8 @@ from app.schemas import (
     UserRegisterSchema,
     UserLoginSchema,
     TripPlanSchema,
-    UserPreferenceSchema
+    UserPreferenceSchema,
+    DestinationCompareSchema,
 )
 from app.auth import hash_password, verify_password
 from app.services.rag_ingestion_service import load_and_chunk_documents
@@ -31,7 +33,6 @@ from app.services.vector_store_service import (
     rebuild_vector_store
 )
 from app.services.agent_service import travel_planning_agent
-from app.services.langchain_service import query_travel_assistant
 
 app = FastAPI(title="Smart Travel Planner Backend")
 
@@ -208,6 +209,20 @@ def search_rag(query: str, role: str):
     return semantic_search(query, role)
 
 
+@app.get("/destinations")
+def get_destinations():
+    from app.services.destination_compare_service import list_destinations
+
+    return {"destinations": list_destinations()}
+
+
+@app.post("/compare-destinations")
+def compare_destination_options(compare_request: DestinationCompareSchema):
+    from app.services.destination_compare_service import compare_destinations
+
+    return compare_destinations(compare_request.destinations)
+
+
 # ---------------- USER PREFERENCES ----------------
 
 @app.post("/save-preferences")
@@ -292,42 +307,6 @@ def get_preferences(
     }
 
 
-# ---------------- NATURAL LANGUAGE QUERY ----------------
-
-@app.get("/ask-travel")
-def ask_travel(
-    query: str,
-    user_id: str,
-    db: Session = Depends(get_db)
-):
-    user = db.query(User).filter(
-        User.id == uuid.UUID(user_id)
-    ).first()
-
-    if not user:
-        raise HTTPException(
-            status_code=404,
-            detail="User not found"
-        )
-
-    response = query_travel_assistant(
-        query,
-        user.role
-    )
-
-    conversation = Conversation(
-        user_id=user.id,
-        user_message=query,
-        assistant_response=response["answer"],
-        tool_used="langchain_retriever"
-    )
-
-    db.add(conversation)
-    db.commit()
-
-    return response
-
-
 @app.get("/conversations")
 def get_conversations(
     user_id: str,
@@ -355,6 +334,22 @@ def get_conversations(
         "total_conversations": len(response),
         "conversations": response
     }
+
+# ---------------- BUDGET OPTIMIZATION ----------------
+@app.post("/optimize-budget")
+def optimize_budget_api(data: dict):
+
+    result = optimize_budget(
+        destination=data["destination"],
+        total_budget=data["budget"],
+        travelers=data.get("travelers", 1),
+        trip_days=data.get("trip_days", 1),
+        preferred_transport=data.get("preferred_transport", "flight"),
+        hotel_category=data.get("hotel_category", "3-star")
+    )
+
+    return result
+
 
 # ---------------- BUDGET OPTIMIZATION ----------------
 @app.post("/optimize-budget-nl")

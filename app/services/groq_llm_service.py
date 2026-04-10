@@ -6,6 +6,10 @@ load_dotenv()
 
 
 def ask_llm(query: str) -> str:
+    """
+    Basic Groq LLM call for general travel queries.
+    Used as fallback when RAG does not provide relevant results.
+    """
 
     try:
 
@@ -39,8 +43,8 @@ def ask_llm(query: str) -> str:
 
         return response.choices[0].message.content
 
-    except Exception as e:
-
-        print("Groq error:", e)
-
-        return "Unable to generate response right now."
+    except Exception:
+        return (
+            "Sorry, I am unable to fetch travel guidance right now. "
+            "Please try again in a moment."
+        )

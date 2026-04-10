@@ -30,3 +30,7 @@ class UserPreferenceSchema(BaseModel):
     preferred_trip_type: str | None = None
     food_preference: str | None = None
     preferred_climate: str | None = None
+
+
+class DestinationCompareSchema(BaseModel):
+    destinations: list[str]

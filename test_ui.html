@@ -278,6 +278,48 @@
     .sub-panel { display: none; }
     .sub-panel.active { display: block; }
 
+    .checkbox-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .checkbox-card {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--input-bg);
+    }
+    .compare-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 14px;
+      margin-top: 14px;
+    }
+    .compare-card {
+      background: #0a0c14;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+    }
+    .compare-card h4 {
+      font-size: 16px;
+      margin-bottom: 10px;
+      color: var(--accent2);
+    }
+    .compare-card p,
+    .compare-card li {
+      font-size: 12px;
+      color: var(--text);
+      line-height: 1.6;
+    }
+    .compare-card ul {
+      padding-left: 18px;
+      margin: 8px 0 0;
+    }
     /* syntax highlight helpers */
     .json-key   { color: #7aa6da; }
     .json-str   { color: #b5e8a3; }
@@ -311,9 +353,9 @@
       🤖 Agent
       <span class="badge">svc</span>
     </button>
-    <button onclick="showPanel('langchain')">
-      💬 LangChain
-      <span class="badge">svc</span>
+    <button onclick="showPanel('compare')">
+      🧭 Compare
+      <span class="badge">new</span>
     </button>
     <button onclick="showPanel('conversations')">
       📋 Conversations
@@ -606,37 +648,21 @@
   </section>
 
   <!-- ──────────── LANGCHAIN ──────────── -->
-  <section class="panel" id="panel-langchain">
+  <section class="panel" id="panel-compare">
     <div class="panel-header">
-      <div class="service-tag">langchain_service.py</div>
-      <h2>LangChain Travel Assistant</h2>
-      <p>Tests <code>query_travel_assistant(query, role)</code> — uses <code>TravelRetriever</code> (LangChain BaseRetriever) backed by ChromaDB. Applies RBAC keyword filtering before retrieval. Requires login.</p>
+      <div class="service-tag">destination_compare_service.py</div>
+      <h2>Destination Comparison</h2>
+      <p>Compare available destinations side by side using the same backend your friend&apos;s UI is already testing.</p>
     </div>
 
     <div class="card">
-      <h3><span class="method GET">GET</span> /ask-travel — Travel Q&amp;A</h3>
-      <div class="form-row">
-        <div class="form-group" style="grid-column: span 3;">
-          <label>YOUR QUESTION</label>
-          <input id="lc-query" type="text" placeholder="Ask anything about travel destinations..." value="What are the best places to visit in Bangalore?" />
-        </div>
-      </div>
-      <p style="font-size:11px;color:var(--muted);margin-bottom:10px;">Role is taken from your logged-in account automatically. Current role: <span id="lc-role-display" style="color:var(--accent2)">not logged in</span></p>
-      <button class="btn btn-primary" onclick="callAskTravel()">Ask Travel Assistant</button>
-      <div class="response-box" id="res-ask-travel"></div>
-    </div>
-
-    <!-- RBAC keyword tests -->
-    <div class="card">
-      <h3>🧪 RBAC Keyword Restriction Tests</h3>
-      <p style="font-size:12px;color:var(--muted);margin-bottom:12px;">Quick-test queries that should be blocked for user/agent roles:</p>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
-        <button class="btn btn-secondary" onclick="setLcQuery('What is the profit margin on Goa packages?')">Admin-only: margin</button>
-        <button class="btn btn-secondary" onclick="setLcQuery('Show me supplier discounts for hotels')">Agent-only: supplier discount</button>
-        <button class="btn btn-secondary" onclick="setLcQuery('Tell me about Mysore palace and tourism')">Allowed: destination info</button>
-        <button class="btn btn-secondary" onclick="setLcQuery('What are the hotel partner costs?')">Agent-only: hotel cost</button>
-      </div>
-      <p style="font-size:11px;color:var(--muted);">Fill query above and click "Ask Travel Assistant".</p>
+      <h3><span class="method GET">GET</span> /destinations</h3>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:12px;">Loads the destination catalog from the detailed destination guide file.</p>
+      <button class="btn btn-secondary" onclick="loadDestinationOptions()">Refresh Destination List</button>
+      <div id="compare-selector" class="checkbox-grid" style="margin-top:14px;"></div>
+      <button class="btn btn-primary" onclick="callCompareDestinations()">Compare Selected Destinations</button>
+      <div class="response-box" id="res-compare-destinations"></div>
+      <div id="compare-results"></div>
     </div>
   </section>
 
@@ -692,9 +718,6 @@
       if (el) el.value = userId;
     });
 
-    // Update role display in LangChain tab
-    const roleDisplay = document.getElementById('lc-role-display');
-    if (roleDisplay) roleDisplay.textContent = role;
   }
 
   // ── API helper ──
@@ -757,6 +780,79 @@
       }
       return `<span class="${cls}">${match}</span>`;
     });
+  }
+
+  async function loadDestinationOptions() {
+    const selector = document.getElementById('compare-selector');
+    selector.innerHTML = '<div class="response-header"><span class="spinner"></span><span style="font-size:12px;color:var(--muted)">Loading destinations...</span></div>';
+
+    try {
+      const res = await fetch(`${BASE_URL}/destinations`);
+      const data = await res.json();
+      const destinations = data.destinations || [];
+
+      if (!destinations.length) {
+        selector.innerHTML = '<p style="font-size:12px;color:var(--muted)">No destinations available.</p>';
+        return;
+      }
+
+      selector.innerHTML = destinations.map(destination => `
+        <label class="checkbox-card">
+          <input type="checkbox" name="compare-destination" value="${destination.name}">
+          <span>${destination.name}${destination.price_preview ? ` - ${destination.price_preview}` : ''}</span>
+        </label>
+      `).join('');
+    } catch (error) {
+      selector.innerHTML = `<p style="font-size:12px;color:var(--error)">Could not load destinations: ${error.message}</p>`;
+    }
+  }
+
+  async function callCompareDestinations() {
+    const selected = Array.from(document.querySelectorAll('input[name="compare-destination"]:checked'))
+      .map(input => input.value);
+
+    if (!selected.length) {
+      alert('Select at least one destination to compare.');
+      return;
+    }
+
+    const result = await apiFetch('POST', '/compare-destinations', {
+      destinations: selected,
+    }, 'res-compare-destinations');
+
+    const compareResults = document.getElementById('compare-results');
+    if (!result || !result.ok) {
+      compareResults.innerHTML = '';
+      return;
+    }
+
+    const found = result.data.found || [];
+    if (!found.length) {
+      compareResults.innerHTML = '<p style="font-size:12px;color:var(--muted);margin-top:14px;">No destination details returned.</p>';
+      return;
+    }
+
+    compareResults.innerHTML = `
+      <div class="compare-grid">
+        ${found.map(destination => `
+          <div class="compare-card">
+            <h4>${destination.name}</h4>
+            <p><strong>Best time:</strong> ${destination.best_time || 'Not available'}</p>
+            <p><strong>Public pricing:</strong></p>
+            <ul>${(destination.public_pricing || []).map(item => `<li>${item}</li>`).join('')}</ul>
+            <p><strong>Hotel price options:</strong></p>
+            <ul>${(destination.hotel_options || []).map(item => `<li>${item}</li>`).join('')}</ul>
+            <p><strong>Overview:</strong> ${destination.overview || 'Not available'}</p>
+            <p><strong>Attractions:</strong></p>
+            <ul>${(destination.popular_attractions || []).map(item => `<li>${item}</li>`).join('')}</ul>
+            <p><strong>Suggested itinerary:</strong></p>
+            <ul>${(destination.suggested_itinerary || []).map(item => `<li>${item}</li>`).join('')}</ul>
+            <p><strong>Food picks:</strong></p>
+            <ul>${(destination.food_recommendations || []).map(item => `<li>${item}</li>`).join('')}</ul>
+          </div>
+        `).join('')}
+      </div>
+    `;
   }
 
   // ═══ AUTH ═══
@@ -866,23 +962,14 @@
     }, 'res-agent-trip');
   }
 
-  // ═══ LANGCHAIN ═══
-  function setLcQuery(q) {
-    document.getElementById('lc-query').value = q;
-  }
-
-  async function callAskTravel() {
-    const query = document.getElementById('lc-query').value;
-    const uid = currentUserId ? `&user_id=${currentUserId}` : '';
-    await apiFetch('GET', `/ask-travel?query=${encodeURIComponent(query)}&role=${currentUserRole}${uid}`, null, 'res-ask-travel');
-  }
-
   // ═══ CONVERSATIONS ═══
   async function callConversations() {
     const userId = document.getElementById('conv-userid').value;
     if (!userId) { alert('Enter a User ID or login first'); return; }
     await apiFetch('GET', `/conversations?user_id=${userId}`, null, 'res-conversations');
   }
+
+  loadDestinationOptions();
 </script>
 </body>
 </html>

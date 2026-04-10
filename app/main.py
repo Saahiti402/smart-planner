@@ -5,6 +5,7 @@ from datetime import datetime
 from app.services.budget_service import optimize_budget
 import uuid
 
+
 from app.database import engine, Base, get_db
 from app.models import (
     User,
@@ -27,6 +28,11 @@ from app.services.vector_store_service import (
 )
 from app.services.agent_service import travel_planning_agent
 from app.services.langchain_service import query_travel_assistant
+from app.services.trip_service import (
+    create_trip,
+    get_all_trips,
+    query_user_trips
+)
 
 app = FastAPI(title="Smart Travel Planner Backend")
 
@@ -366,3 +372,28 @@ def optimize_budget_api(data: dict):
     )
 
     return result
+
+
+
+@app.post("/trip")
+def add_trip(data: dict, db: Session = Depends(get_db)):
+    trip = create_trip(db, data)
+
+    return {
+        "message": "Trip created successfully",
+        "trip_id": str(trip.id)
+    }
+
+
+@app.get("/trips/{user_id}")
+def fetch_trips(user_id: str, db: Session = Depends(get_db)):
+    return get_all_trips(db, user_id)
+
+
+@app.post("/trip/query")
+def query_trips(data: dict, db: Session = Depends(get_db)):
+    return query_user_trips(
+        db,
+        data["user_id"],
+        data["query"]
+    )

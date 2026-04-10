@@ -5,7 +5,7 @@ from langchain_core.documents import Document
 from langchain_core.retrievers import BaseRetriever
 
 from app.services.vector_store_service import semantic_search
-from app.services.groq_llm_service import ask_groq_llm
+from app.services.groq_llm_service import ask_llm
 
 
 # =========================================================
@@ -272,7 +272,7 @@ def query_travel_assistant(
             "source": "rag"
         }
 
-    llm_answer = ask_groq_llm(query)
+    llm_answer = ask_llm(query)
 
     return {
         "query": query,

@@ -3,6 +3,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from datetime import datetime
 import uuid
+from app.services.groq_llm_service import ask_llm
+from app.services.budget_service import optimize_budget
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 
 from app.database import engine, Base, get_db
 from app.models import (
@@ -349,3 +355,46 @@ def get_conversations(
         "total_conversations": len(response),
         "conversations": response
     }
+
+# ---------------- BUDGET OPTIMIZATION ----------------
+@app.post("/optimize-budget-nl")
+def optimize_budget_natural_language(query: dict):
+
+    user_text = query["query"]
+
+    prompt = f"""
+Extract travel details from text.
+
+Return ONLY JSON.
+
+Format:
+{{
+ "destination": "",
+ "budget": 0,
+ "travelers": 0,
+ "trip_days": 0
+}}
+
+Text:
+{user_text}
+"""
+
+    structured_data = ask_llm(prompt)
+
+    import json, re
+
+    json_match = re.search(r"\{.*\}", structured_data, re.DOTALL)
+
+    if not json_match:
+        raise ValueError("No JSON returned from LLM")
+
+    parsed = json.loads(json_match.group())
+
+    result = optimize_budget(
+        destination=parsed["destination"],
+        total_budget=parsed["budget"],
+        travelers=parsed["travelers"],
+        trip_days=parsed["trip_days"]
+    )
+
+    return result

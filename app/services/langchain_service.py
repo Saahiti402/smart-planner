@@ -5,9 +5,7 @@ from langchain_core.documents import Document
 from langchain_core.retrievers import BaseRetriever
 
 from app.services.vector_store_service import semantic_search
-from app.services.groq_llm_service import ask_llm, ask_groq_llm_with_context
-
-from app.services.groq_llm_service import ask_groq_llm
+from app.services.groq_llm_service import ask_groq_llm, ask_groq_llm_with_context
 # =========================================================
 # ACCESS CONTROL KEYWORDS
 # =========================================================

@@ -355,7 +355,19 @@
     </button>
     <button onclick="showPanel('compare')">
       🧭 Compare
-      <span class="badge">new</span>
+      <span class="badge">svc</span>
+    </button>
+    <button onclick="showPanel('budget')">
+      💰 Budget Optimizer
+      <span class="badge">svc</span>
+    </button>
+    <button onclick="showPanel('ask-travel')">
+      🤖 Ask Travel
+      <span class="badge">svc</span>
+    </button>
+    <button onclick="showPanel('external')">
+      🌍 External Data
+      <span class="badge">svc</span>
     </button>
     <button onclick="showPanel('conversations')">
       📋 Conversations
@@ -666,6 +678,170 @@
     </div>
   </section>
 
+  <!-- ──────────── BUDGET OPTIMIZER ──────────── -->
+  <section class="panel" id="panel-budget">
+    <div class="panel-header">
+      <div class="service-tag">budget_service.py</div>
+      <h2>Budget Optimization Tool</h2>
+      <p>Tests <code>optimize_budget()</code> — allocates budget across hotel, transport, food, activities &amp; misc based on destination, travelers, and trip days.</p>
+    </div>
+
+    <!-- Structured input -->
+    <div class="card">
+      <h3><span class="method POST">POST</span> /optimize-budget — Structured Input</h3>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:12px;">Provide structured travel details to get an optimized budget breakdown.</p>
+      <div class="form-row">
+        <div class="form-group">
+          <label>DESTINATION</label>
+          <input id="bud-dest" type="text" value="Goa" />
+        </div>
+        <div class="form-group">
+          <label>TOTAL BUDGET (₹)</label>
+          <input id="bud-budget" type="number" value="50000" />
+        </div>
+        <div class="form-group">
+          <label>TRAVELERS</label>
+          <input id="bud-travelers" type="number" value="2" />
+        </div>
+        <div class="form-group">
+          <label>TRIP DAYS</label>
+          <input id="bud-days" type="number" value="5" />
+        </div>
+        <div class="form-group">
+          <label>TRANSPORT</label>
+          <select id="bud-transport">
+            <option value="flight" selected>Flight</option>
+            <option value="train">Train</option>
+            <option value="bus">Bus</option>
+            <option value="car">Car</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>HOTEL CATEGORY</label>
+          <select id="bud-hotel">
+            <option value="budget">Budget</option>
+            <option value="3-star" selected>3-star</option>
+            <option value="4-star">4-star</option>
+            <option value="5-star">5-star</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="callOptimizeBudget()">Optimize Budget</button>
+      <div class="response-box" id="res-optimize-budget"></div>
+    </div>
+
+    <!-- Natural language input -->
+    <div class="card">
+      <h3><span class="method POST">POST</span> /optimize-budget-nl — Natural Language Input</h3>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:12px;">Describe your trip in plain text. The LLM extracts trip details and runs budget optimization.</p>
+      <div class="form-group" style="margin-bottom:12px;">
+        <label>TRIP DESCRIPTION</label>
+        <input id="bud-nl-query" type="text" value="Plan a 5 day trip to Goa for 2 people with a budget of ₹50000" />
+      </div>
+      <button class="btn btn-primary" onclick="callOptimizeBudgetNL()">Optimize via LLM</button>
+      <div class="response-box" id="res-optimize-budget-nl"></div>
+    </div>
+  </section>
+
+  <!-- ──────────── ASK TRAVEL / LANGCHAIN ──────────── -->
+  <section class="panel" id="panel-ask-travel">
+    <div class="panel-header">
+      <div class="service-tag">langchain_service.py</div>
+      <h2>Ask Travel Assistant</h2>
+      <p>Tests <code>query_travel_assistant(query, role)</code> via <code>GET /ask-travel</code> — uses LangChain RAG to answer travel queries. Response is stored as a Conversation record. Requires login.</p>
+    </div>
+
+    <div class="card">
+      <h3><span class="method GET">GET</span> /ask-travel — LangChain RAG Query</h3>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:12px;">Ask anything travel-related. The agent searches the vector store with your role's RBAC filter and returns a context-aware answer.</p>
+      <div class="form-row">
+        <div class="form-group" style="grid-column: span 2;">
+          <label>TRAVEL QUESTION</label>
+          <input id="at-query" type="text" value="What are the best beaches to visit in Goa?" />
+        </div>
+        <div class="form-group">
+          <label>USER ID (from login)</label>
+          <input id="at-userid" type="text" placeholder="auto-filled from login" />
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="callAskTravel()">Ask Travel Assistant</button>
+      <div class="response-box" id="res-ask-travel"></div>
+    </div>
+
+    <!-- Preferences viewer -->
+    <div class="card">
+      <h3><span class="method GET">GET</span> /my-preferences/{user_id} — View Saved Preferences</h3>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:12px;">Fetch the current user's saved travel preferences from the database.</p>
+      <div class="form-row">
+        <div class="form-group">
+          <label>USER ID</label>
+          <input id="pref-view-userid" type="text" placeholder="auto-filled from login" />
+        </div>
+      </div>
+      <button class="btn btn-secondary" onclick="callGetPreferences()">Fetch My Preferences</button>
+      <div class="response-box" id="res-get-pref"></div>
+    </div>
+  </section>
+
+  <!-- ──────────── EXTERNAL TRAVEL ──────────── -->
+  <section class="panel" id="panel-external">
+    <div class="panel-header">
+      <div class="service-tag">agent_tools.py</div>
+      <h2>External Travel Tool</h2>
+      <p>Tests real-time data fetching via <code>POST /tools/external-travel</code> — supports Weather, Places, Transport, and Flights.</p>
+    </div>
+
+    <!-- Weather -->
+    <div class="card">
+      <h3>Weather</h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label>CITY</label>
+          <input id="ext-weather-city" type="text" value="Goa" />
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="callExternal('weather')">Get Weather</button>
+      <div class="response-box" id="res-ext-weather"></div>
+    </div>
+
+    <!-- Places -->
+    <div class="card">
+      <h3>Places (Attractions)</h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label>CITY</label>
+          <input id="ext-places-city" type="text" value="Goa" />
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="callExternal('places')">Get Places</button>
+      <div class="response-box" id="res-ext-places"></div>
+    </div>
+
+    <!-- Transport -->
+    <div class="card">
+      <h3>Transport Estimate</h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label>START (lat,lon)</label>
+          <input id="ext-start" type="text" value="12.9716,77.5946" placeholder="Bangalore" />
+        </div>
+        <div class="form-group">
+          <label>END (lat,lon)</label>
+          <input id="ext-end" type="text" value="12.2958,76.6394" placeholder="Mysore" />
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="callExternal('transport')">Get Estimate</button>
+      <div class="response-box" id="res-ext-transport"></div>
+    </div>
+
+    <!-- Flights -->
+    <div class="card">
+      <h3>Live Flights (Next 3)</h3>
+      <button class="btn btn-primary" onclick="callExternal('flights')">Get Flights</button>
+      <div class="response-box" id="res-ext-flights"></div>
+    </div>
+  </section>
+
   <!-- ──────────── CONVERSATIONS ──────────── -->
   <section class="panel" id="panel-conversations">
     <div class="panel-header">
@@ -713,7 +889,7 @@
     preview.textContent = email + ' (' + role + ')';
 
     // Auto-fill user ID fields
-    ['it-userid', 'ag-userid', 'ag-pref-userid', 'conv-userid'].forEach(id => {
+    ['it-userid', 'ag-userid', 'ag-pref-userid', 'conv-userid', 'at-userid', 'pref-view-userid'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.value = userId;
     });
@@ -962,11 +1138,61 @@
     }, 'res-agent-trip');
   }
 
+  // ═══ BUDGET OPTIMIZER ═══
+  async function callOptimizeBudget() {
+    await apiFetch('POST', '/optimize-budget', {
+      destination: document.getElementById('bud-dest').value,
+      budget: parseInt(document.getElementById('bud-budget').value),
+      travelers: parseInt(document.getElementById('bud-travelers').value),
+      trip_days: parseInt(document.getElementById('bud-days').value),
+      preferred_transport: document.getElementById('bud-transport').value,
+      hotel_category: document.getElementById('bud-hotel').value,
+    }, 'res-optimize-budget');
+  }
+
+  async function callOptimizeBudgetNL() {
+    const query = document.getElementById('bud-nl-query').value;
+    if (!query) { alert('Enter a trip description'); return; }
+    await apiFetch('POST', '/optimize-budget-nl', { query }, 'res-optimize-budget-nl');
+  }
+
+  // ═══ ASK TRAVEL ═══
+  async function callAskTravel() {
+    const userId = document.getElementById('at-userid').value;
+    const query  = document.getElementById('at-query').value;
+    if (!userId) { alert('Login first to get a User ID'); return; }
+    if (!query)  { alert('Enter a travel question'); return; }
+    await apiFetch('GET', `/ask-travel?query=${encodeURIComponent(query)}&user_id=${userId}`, null, 'res-ask-travel');
+  }
+
+  async function callGetPreferences() {
+    const userId = document.getElementById('pref-view-userid').value;
+    if (!userId) { alert('Login first to get a User ID'); return; }
+    await apiFetch('GET', `/my-preferences/${userId}`, null, 'res-get-pref');
+  }
+
   // ═══ CONVERSATIONS ═══
   async function callConversations() {
     const userId = document.getElementById('conv-userid').value;
     if (!userId) { alert('Enter a User ID or login first'); return; }
     await apiFetch('GET', `/conversations?user_id=${userId}`, null, 'res-conversations');
+  }
+
+  // ═══ EXTERNAL TRAVEL ═══
+  async function callExternal(type) {
+    const boxId = `res-ext-${type}`;
+    const payload = { type };
+
+    if (type === 'weather') {
+      payload.city = document.getElementById('ext-weather-city').value;
+    } else if (type === 'places') {
+      payload.city = document.getElementById('ext-places-city').value;
+    } else if (type === 'transport') {
+      payload.start = document.getElementById('ext-start').value;
+      payload.end = document.getElementById('ext-end').value;
+    }
+
+    await apiFetch('POST', '/tools/external-travel', payload, boxId);
   }
 
   loadDestinationOptions();

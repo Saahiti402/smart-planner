@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
 from app.services.budget_service import optimize_budget
-from app.services.groq_llm_service import ask_llm
+from app.services.groq_llm_service import ask_groq_llm as ask_llm
 
 
 load_dotenv()

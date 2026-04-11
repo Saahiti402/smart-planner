@@ -28,3 +28,25 @@ def ask_groq_llm(query: str) -> str:
 
     except Exception:
         return "LLM service unavailable"
+
+
+def ask_groq_llm_with_context(query: str, context: str) -> str:
+    """Call Groq LLM with RAG context injected into the system prompt."""
+    try:
+        system_prompt = (
+            "You are a smart travel planning assistant. "
+            "Use the following travel knowledge to answer the user's question accurately.\n\n"
+            f"Context:\n{context}"
+        )
+        response = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user",   "content": query}
+            ],
+            temperature=0.3
+        )
+        return response.choices[0].message.content
+
+    except Exception:
+        return "LLM service unavailable"

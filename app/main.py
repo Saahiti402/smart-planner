@@ -33,13 +33,61 @@ from app.services.vector_store_service import (
     semantic_search,
     rebuild_vector_store
 )
-from app.routers.agent_tools import router as agent_tools_router
 from app.services.agent_service import travel_planning_agent
 from app.services.langchain_service import query_travel_assistant
+from app.services.external_travel_service import _fetch_weather_data, _fetch_activities_data, _fetch_flights_data
+from typing import Optional
+from pydantic import BaseModel
+
+class ExternalTravelToolRequest(BaseModel):
+    type: str
+    origin: Optional[str] = None
+    destination: Optional[str] = None
+    date: Optional[str] = None
+    return_date: Optional[str] = None
+    city: Optional[str] = None
+    check_in: Optional[str] = None
+    check_out: Optional[str] = None
 
 app = FastAPI(title="Smart Travel Planner Backend")
 
-app.include_router(agent_tools_router)
+@app.post("/tools/external-travel")
+def external_travel_tool(request: ExternalTravelToolRequest):
+    if request.type == "weather":
+        if not request.city:
+            return {"error": "Missing 'city' for weather. Example: {'type': 'weather', 'city': 'Goa'}"}
+        return {"type": "weather", "data": _fetch_weather_data(request.city)}
+        
+    elif request.type == "places":
+        if not request.city:
+            return {"error": "Missing 'city' for places. Example: {'type': 'places', 'city': 'Goa'}"}
+        from app.services.external_travel_service import _fetch_activities_data
+        return {"type": "places", "data": _fetch_activities_data(request.city)}
+        
+    elif request.type == "flights":
+        if not request.origin or not request.destination or not request.date:
+            return {
+                "error": "Missing 'origin', 'destination', or 'date' for flights. "
+                         "Example: {'type': 'flights', 'origin': 'Bangalore', 'destination': 'Delhi', 'date': '2025-06-15'}"
+            }
+        return {
+            "type": "flights", 
+            "data": _fetch_flights_data(request.origin, request.destination, request.date, request.return_date)
+        }
+        
+    elif request.type == "hotels":
+        if not request.city or not request.check_in or not request.check_out:
+            return {
+                "error": "Missing 'city', 'check_in', or 'check_out' for hotels. "
+                         "Example: {'type': 'hotels', 'city': 'Goa', 'check_in': '2026-10-10', 'check_out': '2026-10-15'}"
+            }
+        from app.services.external_travel_service import _fetch_hotels_data
+        return {
+            "type": "hotels",
+            "data": _fetch_hotels_data(request.city, request.check_in, request.check_out)
+        }
+        
+    return {"error": "Invalid payload type."}
 
 # ---------------- CORS FIX ----------------
 app.add_middleware(

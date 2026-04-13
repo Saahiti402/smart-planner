@@ -817,26 +817,48 @@
       <div class="response-box" id="res-ext-places"></div>
     </div>
 
-    <!-- Transport -->
+    <!-- Hotels -->
     <div class="card">
-      <h3>Transport Estimate</h3>
+      <h3>Live Hotels</h3>
       <div class="form-row">
         <div class="form-group">
-          <label>START (lat,lon)</label>
-          <input id="ext-start" type="text" value="12.9716,77.5946" placeholder="Bangalore" />
+          <label>CITY</label>
+          <input id="ext-hotels-city" type="text" value="Goa" placeholder="e.g. Goa" />
         </div>
         <div class="form-group">
-          <label>END (lat,lon)</label>
-          <input id="ext-end" type="text" value="12.2958,76.6394" placeholder="Mysore" />
+          <label>CHECK-IN</label>
+          <input id="ext-hotels-checkin" type="text" value="2026-10-10" placeholder="YYYY-MM-DD" />
+        </div>
+        <div class="form-group">
+          <label>CHECK-OUT</label>
+          <input id="ext-hotels-checkout" type="text" value="2026-10-15" placeholder="YYYY-MM-DD" />
         </div>
       </div>
-      <button class="btn btn-primary" onclick="callExternal('transport')">Get Estimate</button>
-      <div class="response-box" id="res-ext-transport"></div>
+      <button class="btn btn-primary" onclick="callExternal('hotels')">Get Hotels</button>
+      <div class="response-box" id="res-ext-hotels"></div>
     </div>
 
     <!-- Flights -->
     <div class="card">
       <h3>Live Flights (Next 3)</h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label>ORIGIN</label>
+          <input id="ext-flights-origin" type="text" value="Bangalore" placeholder="e.g. Bangalore" />
+        </div>
+        <div class="form-group">
+          <label>DESTINATION</label>
+          <input id="ext-flights-dest" type="text" value="Delhi" placeholder="e.g. Delhi" />
+        </div>
+        <div class="form-group">
+          <label>DATE</label>
+          <input id="ext-flights-date" type="text" value="2026-10-10" placeholder="YYYY-MM-DD" />
+        </div>
+        <div class="form-group">
+          <label>RETURN DATE (optional)</label>
+          <input id="ext-flights-return-date" type="text" placeholder="YYYY-MM-DD" />
+        </div>
+      </div>
       <button class="btn btn-primary" onclick="callExternal('flights')">Get Flights</button>
       <div class="response-box" id="res-ext-flights"></div>
     </div>
@@ -1008,7 +1030,17 @@
       return;
     }
 
-    compareResults.innerHTML = `
+    let htmlOutput = "";
+    
+    if (result.ai_verdict) {
+      htmlOutput += `
+      <div class="card" style="margin-bottom: 20px; background-color: #1e222b; border-left: 4px solid #6c63ff;">
+        <h4 style="color: #6c63ff; margin-bottom: 12px;">🤖 AI Verdict</h4>
+        <div style="white-space: pre-wrap; font-size: 14px; color: #dcdcdc; line-height: 1.6;">${result.ai_verdict}</div>
+      </div>`;
+    }
+
+    htmlOutput += `
       <div class="compare-grid">
         ${found.map(destination => `
           <div class="compare-card">
@@ -1018,6 +1050,7 @@
             <ul>${(destination.public_pricing || []).map(item => `<li>${item}</li>`).join('')}</ul>
             <p><strong>Hotel price options:</strong></p>
             <ul>${(destination.hotel_options || []).map(item => `<li>${item}</li>`).join('')}</ul>
+            <p><strong>Live Weather:</strong> ${destination.live_weather ? '<br/><pre style="font-size:11px; white-space:pre-wrap;">' + destination.live_weather + '</pre>' : 'Not available'}</p>
             <p><strong>Overview:</strong> ${destination.overview || 'Not available'}</p>
             <p><strong>Attractions:</strong></p>
             <ul>${(destination.popular_attractions || []).map(item => `<li>${item}</li>`).join('')}</ul>
@@ -1029,6 +1062,8 @@
         `).join('')}
       </div>
     `;
+    
+    compareResults.innerHTML = htmlOutput;
   }
 
   // ═══ AUTH ═══
@@ -1187,9 +1222,18 @@
       payload.city = document.getElementById('ext-weather-city').value;
     } else if (type === 'places') {
       payload.city = document.getElementById('ext-places-city').value;
-    } else if (type === 'transport') {
-      payload.start = document.getElementById('ext-start').value;
-      payload.end = document.getElementById('ext-end').value;
+    } else if (type === 'hotels') {
+      payload.city = document.getElementById('ext-hotels-city').value;
+      payload.check_in = document.getElementById('ext-hotels-checkin').value;
+      payload.check_out = document.getElementById('ext-hotels-checkout').value;
+    } else if (type === 'flights') {
+      payload.origin = document.getElementById('ext-flights-origin').value;
+      payload.destination = document.getElementById('ext-flights-dest').value;
+      payload.date = document.getElementById('ext-flights-date').value;
+      const returnDate = document.getElementById('ext-flights-return-date').value;
+      if (returnDate) {
+          payload.return_date = returnDate;
+      }
     }
 
     await apiFetch('POST', '/tools/external-travel', payload, boxId);

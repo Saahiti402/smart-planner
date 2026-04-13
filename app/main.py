@@ -8,6 +8,11 @@ from sqlalchemy.orm import Session
 
 from app.services.budget_service import optimize_budget
 from app.services.groq_llm_service import ask_groq_llm as ask_llm
+from app.services.trip_service import (
+    create_trip,
+    get_all_trips,
+    query_user_trips
+)
 
 
 load_dotenv()
@@ -490,3 +495,27 @@ Text:
     )
 
     return result
+
+#trip service
+@app.post("/trip")
+def add_trip(data: dict, db: Session = Depends(get_db)):
+    trip = create_trip(db, data)
+
+    return {
+        "message": "Trip created successfully",
+        "trip_id": str(trip.id)
+    }
+
+
+@app.get("/trips/{user_id}")
+def fetch_trips(user_id: str, db: Session = Depends(get_db)):
+    return get_all_trips(db, user_id)
+
+
+@app.post("/trip/query")
+def query_trips(data: dict, db: Session = Depends(get_db)):
+    return query_user_trips(
+        db,
+        data["user_id"],
+        data["query"]
+    )

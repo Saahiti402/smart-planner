@@ -485,10 +485,8 @@ Text:
     )
 
     return result
-# ==========================================================
-# 🚀 TRIP SERVICE (NEW - SEPARATE FROM AGENT)
-# ==========================================================
 
+#trip service
 @app.post("/trip")
 def add_trip(data: dict, db: Session = Depends(get_db)):
     trip = create_trip(db, data)

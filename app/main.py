@@ -38,6 +38,7 @@ from app.services.langchain_service import query_travel_assistant
 from app.services.external_travel_service import _fetch_weather_data, _fetch_activities_data, _fetch_flights_data
 from typing import Optional
 from pydantic import BaseModel
+from app.services.ask_travel_router import route_travel_query
 
 class ExternalTravelToolRequest(BaseModel):
     type: str
@@ -366,6 +367,7 @@ def ask_travel(
     user_id: str,
     db: Session = Depends(get_db)
 ):
+    # Step 1 → fetch user
     user = db.query(User).filter(
         User.id == uuid.UUID(user_id)
     ).first()
@@ -376,23 +378,31 @@ def ask_travel(
             detail="User not found"
         )
 
-    response = query_travel_assistant(
-        query,
-        user.role
+    # Step 2 → route natural language query
+    response = route_travel_query(
+        query=query,
+        role=user.role
     )
 
+    # Step 3 → normalize response text for conversation logging
+    response_text = str(response.get("response", response))
+
+    # Step 4 → save conversation
     conversation = Conversation(
         user_id=user.id,
         user_message=query,
-        assistant_response=response["answer"],
-        tool_used=response.get("source", "travel_assistant")
+        assistant_response=response_text,
+        tool_used=response.get(
+            "tool_used",
+            "travel_assistant"
+        )
     )
 
     db.add(conversation)
     db.commit()
 
+    # Step 5 → return final response
     return response
-
 
 @app.get("/conversations")
 def get_conversations(

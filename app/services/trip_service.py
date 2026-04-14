@@ -8,13 +8,17 @@ from app.models import Trip
 def classify_trip(trip):
     today = date.today()
 
+    # highest priority → explicit completed status
+    if trip.status and trip.status.lower() == "completed":
+        return "past"
+
+    # fallback date logic
     if trip.end_date < today:
         return "past"
     elif trip.start_date > today:
-        return "planned"   
+        return "planned"
     else:
         return "ongoing"
-
 
 
 def create_trip(db: Session, data: dict):

@@ -206,76 +206,70 @@ class TravelRetriever(BaseRetriever):
 
 def parse_city_pricing(docs: List[Document]) -> Dict[str, Dict[str, int]]:
     """
-    Build a per-city pricing dictionary from retrieved docs.
-
-    Strategy:
-      1. Combine all doc text and split on  === CITY: <name> ===  headers.
-         This works even when multiple cities land in the same chunk and
-         the metadata city tag is wrong (always the first city found).
-      2. Fall back to metadata-based parsing for any city still missing.
-      3. Derive margin = selling_price - vendor_cost where not explicit.
-
-    Returns:
-        {
-            "goa":    {"vendor cost": 14000, "margin": 4500, ...},
-            "mysore": {"vendor cost": 9000,  "margin": 3000, ...},
-            ...
-        }
+    Build per-city pricing dictionary using regex-based city block extraction.
+    More robust than split() for chunked RAG text.
     """
     city_data: Dict[str, Dict[str, int]] = {}
 
-    # ── Pass 1: parse city-section headers from the raw text ─────────────────
     combined = "\n".join(doc.page_content for doc in docs)
 
-    # Split on  === CITY: GOA ===  (case-insensitive)
-    parts = re.split(r"===\s*city:\s*(\w+)\s*===", combined, flags=re.IGNORECASE)
-    # parts = [preamble, "GOA", goa_text, "MYSORE", mysore_text, ...]
+    pattern = re.compile(
+        r"===\s*CITY:\s*(.*?)\s*===\s*(.*?)(?=(===\s*CITY:|\Z))",
+        re.IGNORECASE | re.DOTALL
+    )
 
-    i = 1
-    while i + 1 < len(parts):
-        city      = parts[i].strip().lower()
-        city_text = parts[i + 1]
+    matches = pattern.findall(combined)
+
+    for match in matches:
+        city = match[0].strip().lower()
+        city_text = match[1]
 
         if city not in city_data:
             city_data[city] = {}
 
         for raw_line in city_text.splitlines():
             line = raw_line.lower().strip()
+
             for field, matcher in FIELD_MATCHERS.items():
                 if field in city_data[city]:
                     continue
+
                 if matcher(line):
                     value = extract_inr_from_line(line)
                     if value is not None:
                         city_data[city][field] = value
-        i += 2
 
-    # ── Pass 2: metadata fallback for docs without city headers ──────────────
+    # fallback metadata parsing
     for doc in docs:
         city = doc.metadata.get("city", "general")
+
         if city == "general" or city in city_data:
             continue
+
         city_data[city] = {}
+
         for raw_line in doc.page_content.splitlines():
             line = raw_line.lower().strip()
+
             for field, matcher in FIELD_MATCHERS.items():
                 if field in city_data[city]:
                     continue
+
                 if matcher(line):
                     value = extract_inr_from_line(line)
                     if value is not None:
                         city_data[city][field] = value
 
-    # ── Pass 3: derive margin where not stored explicitly ────────────────────
+    # derive margin if missing
     for city, data in city_data.items():
         if "margin" not in data:
-            vendor  = data.get("vendor cost")
+            vendor = data.get("vendor cost")
             selling = data.get("selling price")
+
             if vendor and selling:
                 data["margin"] = selling - vendor
 
     return city_data
-
 
 def format_city_full(city: str, data: Dict[str, int]) -> str:
     """Return a full pricing breakdown for one city, nicely formatted."""
@@ -447,7 +441,6 @@ def query_travel_assistant(
 
     # ── 4. No RAG docs → Groq LLM directly ───────────────────────────────────
     answer = ask_groq_llm(query)
-    llm_answer = ask_groq_llm(query)
 
     return {
         "query":  query,

@@ -57,7 +57,7 @@ def semantic_search(query: str, role: str):
 
     results = collection.query(
         query_embeddings=[query_embedding],
-        n_results=10
+        n_results=20
     )
 
     filtered_results = []

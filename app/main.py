@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, Depends, HTTPException
@@ -11,7 +11,9 @@ from app.services.groq_llm_service import ask_groq_llm as ask_llm
 from app.services.trip_service import (
     create_trip,
     get_all_trips,
-    query_user_trips
+    query_user_trips, 
+    mark_latest_trip_completed, 
+    get_latest_trip
 )
 
 
@@ -372,9 +374,19 @@ def ask_travel(
     user_id: str,
     db: Session = Depends(get_db)
 ):
-    # Step 1 → fetch user
+    # =====================================================
+    # STEP 1: FETCH USER
+    # =====================================================
+    try:
+        user_uuid = uuid.UUID(user_id)
+    except ValueError:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid user_id format"
+        )
+
     user = db.query(User).filter(
-        User.id == uuid.UUID(user_id)
+        User.id == user_uuid
     ).first()
 
     if not user:
@@ -383,61 +395,182 @@ def ask_travel(
             detail="User not found"
         )
 
-    # Step 2 → route natural language query
-    response = route_travel_query(
-        query=query,
-        role=user.role
-    )
+    query_lower = query.lower().strip()
 
-    # Step 3 → normalize response text for conversation logging
-    response_text = str(response.get("response", response))
+    # =====================================================
+    # STEP 2: TRIP MANAGEMENT ACTIONS
+    # =====================================================
+    if any(
+        phrase in query_lower
+        for phrase in [
+            "mark my recent planned trip as completed",
+            "complete my latest trip",
+            "mark last trip as done",
+            "mark my recent trip as completed"
+        ]
+    ):
+        response = mark_latest_trip_completed(
+            db,
+            user_id
+        )
+        tool_used = "trip_management"
 
-    # Step 4 → save conversation
-    conversation = Conversation(
-        user_id=user.id,
-        user_message=query,
-        assistant_response=response_text,
-        tool_used=response.get(
+    elif any(
+        phrase in query_lower
+        for phrase in [
+            "show my recent trip",
+            "show my latest trip",
+            "recent trip",
+            "latest trip"
+        ]
+    ):
+        response = get_latest_trip(
+            db,
+            user_id
+        )
+        tool_used = "trip_management"
+
+    elif any(
+        keyword in query_lower
+        for keyword in [
+            "past trip",
+            "past trips",
+            "planned trips",
+            "next trip",
+            "current trip",
+            "trip status"
+        ]
+    ):
+        response = query_user_trips(
+            db,
+            user_id,
+            query
+        )
+        tool_used = "trip_management"
+
+    # =====================================================
+    # STEP 3: NATURAL LANGUAGE TRIP PLANNING + SAVE TO DB
+    # =====================================================
+    elif any(
+        keyword in query_lower
+        for keyword in [
+            "plan trip",
+            "trip plan",
+            "plan 3 day",
+            "plan 5 day",
+            "travel plan"
+        ]
+    ):
+        # -------- detect destination --------
+        destination = "Goa"
+
+        if "mysore" in query_lower:
+            destination = "Mysore"
+        elif "chennai" in query_lower:
+            destination = "Chennai"
+
+        # -------- dynamic dates --------
+        today = datetime.now().date()
+        start_date = today + timedelta(days=1)
+        end_date = start_date + timedelta(days=2)
+
+        # -------- create trip --------
+        trip_data = {
+            "user_id": str(user.id),
+            "source": "Bangalore",
+            "destination": destination,
+            "start_date": start_date.strftime("%Y-%m-%d"),
+            "end_date": end_date.strftime("%Y-%m-%d"),
+            "budget": 15000,
+            "travelers": 1
+        }
+
+        created_trip = create_trip(
+            db,
+            trip_data
+        )
+
+        # -------- generate itinerary --------
+        routed_response = route_travel_query(
+            query=query,
+            role=user.role
+        )
+
+        itinerary_text = routed_response.get(
+            "response",
+            routed_response
+        )
+
+        recommendations = routed_response.get(
+            "recommendations",
+            []
+        )
+
+        # -------- save itinerary --------
+        itinerary_record = Itinerary(
+            trip_id=created_trip.id,
+            day_plan=str(itinerary_text),
+            estimated_cost=created_trip.budget,
+            recommendations=str(recommendations),
+            generated_by_agent=True
+        )
+
+        db.add(itinerary_record)
+        db.commit()
+
+        response = {
+            "trip_id": str(created_trip.id),
+            "destination": created_trip.destination,
+            "status": created_trip.status,
+            "start_date": str(created_trip.start_date),
+            "end_date": str(created_trip.end_date),
+            "itinerary": itinerary_text,
+            "recommendations": recommendations
+        }
+
+        tool_used = "trip_planning"
+
+    # =====================================================
+    # STEP 4: ALL OTHER NATURAL LANGUAGE QUERIES
+    # =====================================================
+    else:
+        routed_response = route_travel_query(
+            query=query,
+            role=user.role
+        )
+
+        response = routed_response.get(
+            "response",
+            routed_response
+        )
+
+        tool_used = routed_response.get(
             "tool_used",
             "travel_assistant"
         )
+
+    # =====================================================
+    # STEP 5: SAVE CONVERSATION
+    # =====================================================
+    conversation = Conversation(
+        user_id=user.id,
+        user_message=query,
+        assistant_response=str(response),
+        tool_used=tool_used
     )
 
     db.add(conversation)
     db.commit()
 
-    # Step 5 → return final response
-    return response
-
-@app.get("/conversations")
-def get_conversations(
-    user_id: str,
-    db: Session = Depends(get_db)
-):
-    conversations = db.query(Conversation).filter(
-        Conversation.user_id == uuid.UUID(user_id)
-    ).order_by(
-        Conversation.created_at.desc()
-    ).all()
-
-    response = []
-
-    for convo in conversations:
-        response.append({
-            "id": str(convo.id),
-            "session_id": str(convo.session_id),
-            "user_message": convo.user_message,
-            "assistant_response": convo.assistant_response,
-            "tool_used": convo.tool_used,
-            "created_at": convo.created_at.isoformat()
-        })
-
+    # =====================================================
+    # STEP 6: RETURN RESPONSE
+    # =====================================================
     return {
-        "total_conversations": len(response),
-        "conversations": response
+        "user_role": user.role,
+        "tool_used": tool_used,
+        "response": response
     }
-
-# ---------------- BUDGET OPTIMIZATION ----------------
+# Budget Optimization with Structured Input
 @app.post("/optimize-budget")
 def optimize_budget_api(data: dict):
 
@@ -453,7 +586,7 @@ def optimize_budget_api(data: dict):
     return result
 
 
-# ---------------- BUDGET OPTIMIZATION ----------------
+# Budget Optimization with Natural Language Input
 @app.post("/optimize-budget-nl")
 def optimize_budget_natural_language(query: dict):
 
@@ -519,3 +652,28 @@ def query_trips(data: dict, db: Session = Depends(get_db)):
         data["user_id"],
         data["query"]
     )
+
+@app.get("/conversations")
+def get_conversations(
+    user_id: str,
+    db: Session = Depends(get_db)
+):
+    conversations = db.query(Conversation).filter(
+        Conversation.user_id == uuid.UUID(user_id)
+    ).order_by(
+        Conversation.created_at.desc()
+    ).all()
+
+    return {
+        "total_conversations": len(conversations),
+        "conversations": [
+            {
+                "id": str(c.id),
+                "user_message": c.user_message,
+                "assistant_response": c.assistant_response,
+                "tool_used": c.tool_used,
+                "created_at": c.created_at.isoformat()
+            }
+            for c in conversations
+        ]
+    }

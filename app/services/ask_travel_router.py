@@ -53,7 +53,8 @@ def route_travel_query(query: str, role: str = "user"):
     # =====================================================
     # EXTERNAL TRAVEL TOOL
     # =====================================================
-    if any(
+    if (
+        any(
         keyword in query_lower
         for keyword in [
             "weather",
@@ -71,6 +72,10 @@ def route_travel_query(query: str, role: str = "user"):
             "things to do",
             "places"
         ]
+    )
+    and "supplier" not in query_lower
+    and "vendor" not in query_lower
+    and "margin" not in query_lower
     ):
         return {
             "tool_used": "external_travel_tool",

@@ -27,7 +27,10 @@ def ask_groq_llm(query: str) -> str:
         return response.choices[0].message.content
 
     except Exception:
-        return "LLM service unavailable"
+        return (
+            "Sorry, live travel guidance is temporarily unavailable. "
+            "Please try again in a moment."
+            )
 
 
 def ask_groq_llm_with_context(query: str, context: str) -> str:
@@ -49,4 +52,7 @@ def ask_groq_llm_with_context(query: str, context: str) -> str:
         return response.choices[0].message.content
 
     except Exception:
-        return "LLM service unavailable"
+        return (
+            "Sorry, live travel guidance is temporarily unavailable. "
+            "Please try again in a moment."
+        )

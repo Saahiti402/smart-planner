@@ -136,3 +136,45 @@ def query_user_trips(db: Session, user_id: str, query: str):
         }
 
     return {"answer": "Sorry, I couldn't understand your query"}
+
+def mark_latest_trip_completed(db: Session, user_id: str):
+    latest_trip = db.query(Trip).filter(
+        Trip.user_id == uuid.UUID(user_id)
+    ).order_by(
+        Trip.start_date.desc()
+    ).first()
+
+    if not latest_trip:
+        return {"answer": "No trips found"}
+
+    latest_trip.status = "completed"
+    db.commit()
+
+    return {
+        "answer": (
+            f"Your latest trip to "
+            f"{latest_trip.destination} "
+            f"has been marked as completed."
+        ),
+        "destination": latest_trip.destination,
+        "status": latest_trip.status
+    }
+
+def get_latest_trip(db: Session, user_id: str):
+    latest_trip = db.query(Trip).filter(
+        Trip.user_id == uuid.UUID(user_id)
+    ).order_by(
+        Trip.start_date.desc()
+    ).first()
+
+    if not latest_trip:
+        return {"answer": "No trips found"}
+
+    return {
+        "destination": latest_trip.destination,
+        "status": latest_trip.status,
+        "budget": latest_trip.budget,
+        "start_date": str(latest_trip.start_date),
+        "end_date": str(latest_trip.end_date)
+    }
+

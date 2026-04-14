@@ -44,6 +44,7 @@ from app.services.external_travel_service import _fetch_weather_data, _fetch_act
 from typing import Optional
 from pydantic import BaseModel
 from app.services.ask_travel_router import route_travel_query
+from app.services.trip_service import mark_latest_trip_completed, get_latest_trip, query_user_trips
 
 class ExternalTravelToolRequest(BaseModel):
     type: str
@@ -372,9 +373,19 @@ def ask_travel(
     user_id: str,
     db: Session = Depends(get_db)
 ):
-    # Step 1 → fetch user
+    # =====================================================
+    # STEP 1: FETCH USER
+    # =====================================================
+    try:
+        user_uuid = uuid.UUID(user_id)
+    except ValueError:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid user_id format"
+        )
+
     user = db.query(User).filter(
-        User.id == uuid.UUID(user_id)
+        User.id == user_uuid
     ).first()
 
     if not user:
@@ -383,31 +394,106 @@ def ask_travel(
             detail="User not found"
         )
 
-    # Step 2 → route natural language query
-    response = route_travel_query(
-        query=query,
-        role=user.role
-    )
+    query_lower = query.lower().strip()
 
-    # Step 3 → normalize response text for conversation logging
-    response_text = str(response.get("response", response))
+    # =====================================================
+    # STEP 2: TRIP MANAGEMENT ACTIONS
+    # =====================================================
 
-    # Step 4 → save conversation
-    conversation = Conversation(
-        user_id=user.id,
-        user_message=query,
-        assistant_response=response_text,
-        tool_used=response.get(
+    # Mark latest trip as completed
+    if any(
+        phrase in query_lower
+        for phrase in [
+            "mark my recent planned trip as completed",
+            "complete my latest trip",
+            "mark last trip as done",
+            "mark my recent trip as completed"
+        ]
+    ):
+        response = mark_latest_trip_completed(
+            db,
+            user_id
+        )
+
+        tool_used = "trip_management"
+
+    # Show latest trip
+    elif any(
+        phrase in query_lower
+        for phrase in [
+            "show my recent trip",
+            "show my latest trip",
+            "recent trip",
+            "latest trip"
+        ]
+    ):
+        response = get_latest_trip(
+            db,
+            user_id
+        )
+
+        tool_used = "trip_management"
+
+    # Trip history / trip status queries
+    elif any(
+        keyword in query_lower
+        for keyword in [
+            "past trip",
+            "past trips",
+            "planned trips",
+            "next trip",
+            "current trip",
+            "trip status"
+        ]
+    ):
+        response = query_user_trips(
+            db,
+            user_id,
+            query
+        )
+
+        tool_used = "trip_management"
+
+    # =====================================================
+    # STEP 3: ROUTE ALL OTHER NATURAL LANGUAGE QUERIES
+    # =====================================================
+    else:
+        routed_response = route_travel_query(
+            query=query,
+            role=user.role
+        )
+
+        response = routed_response.get(
+            "response",
+            routed_response
+        )
+
+        tool_used = routed_response.get(
             "tool_used",
             "travel_assistant"
         )
+
+    # =====================================================
+    # STEP 4: SAVE CONVERSATION
+    # =====================================================
+    conversation = Conversation(
+        user_id=user.id,
+        user_message=query,
+        assistant_response=str(response),
+        tool_used=tool_used
     )
 
     db.add(conversation)
     db.commit()
 
-    # Step 5 → return final response
-    return response
+    # =====================================================
+    # STEP 5: RETURN RESPONSE
+    # =====================================================
+    return {
+        "user_role": user.role,
+        "tool_used": tool_used,
+        "response": response
+    }
 
 @app.get("/conversations")
 def get_conversations(

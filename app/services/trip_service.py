@@ -90,6 +90,7 @@ def get_all_trips(db: Session, user_id: str):
 
 
 def query_user_trips(db: Session, user_id: str, query: str):
+
     query = query.lower()
 
     try:

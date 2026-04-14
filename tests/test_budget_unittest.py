@@ -26,19 +26,19 @@ class TestBudgetOptimizer(unittest.TestCase):
         result = optimize_budget("Kerala", 40000, 4, 4)
         self.assertEqual(result["per_person_budget"], 10000)
 
-    def test_short_trip_adjustment(self):
+    def test_short_trip(self):
         result = optimize_budget("Goa", 30000, 2, 2)
         self.assertIn("budget_allocation", result)
 
-    def test_long_trip_adjustment(self):
+    def test_long_trip(self):
         result = optimize_budget("Goa", 70000, 2, 7)
         self.assertIn("budget_allocation", result)
 
-    def test_budget_hotel_category(self):
+    def test_budget_hotel(self):
         result = optimize_budget("Goa", 30000, 2, 4, hotel_category="budget")
         self.assertIn("budget_allocation", result)
 
-    def test_luxury_hotel_category(self):
+    def test_luxury_hotel(self):
         result = optimize_budget("Goa", 100000, 2, 4, hotel_category="5-star")
         self.assertEqual(result["recommended_transport"], "flight")
 
@@ -73,6 +73,31 @@ class TestBudgetOptimizer(unittest.TestCase):
     def test_zero_trip_days(self):
         with self.assertRaises(HTTPException):
             optimize_budget("Goa", 20000, 2, 0)
+
+    def test_single_traveler(self):
+        result = optimize_budget("Goa", 20000, 1, 2)
+        self.assertEqual(result["per_person_budget"], 20000)
+
+    def test_many_travelers(self):
+        result = optimize_budget("Goa", 100000, 10, 2)
+        self.assertEqual(result["per_person_budget"], 10000)
+
+    def test_case_insensitive_hotel(self):
+        result = optimize_budget("Goa", 30000, 2, 3, hotel_category="BUDGET")
+        self.assertIn("budget_allocation", result)
+
+    def test_train_transport(self):
+        result = optimize_budget("Goa", 30000, 2, 3, preferred_transport="train")
+        self.assertEqual(result["recommended_transport"], "train")
+
+    def test_large_budget(self):
+        result = optimize_budget("Goa", 1000000, 5, 10)
+        self.assertIn("budget_allocation", result)
+
+    def test_allocation_keys(self):
+        result = optimize_budget("Goa", 50000, 2, 3)
+        keys = result["budget_allocation"].keys()
+        self.assertCountEqual(keys, ["hotel", "transport", "food", "activities", "misc"])
 
 
 if __name__ == "__main__":

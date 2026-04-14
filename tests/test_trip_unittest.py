@@ -10,7 +10,7 @@ class TestTripAPI(unittest.TestCase):
     def setUp(self):
         self.user_id = "796773ab-dcad-4c19-b973-00415e08e8ab"
 
-    def test_create_trip_1(self):
+    def test_create_trip_valid(self):
         payload = {
             "user_id": self.user_id,
             "source": "Chennai",
@@ -19,32 +19,6 @@ class TestTripAPI(unittest.TestCase):
             "end_date": "2026-06-03",
             "budget": 12000,
             "travelers": 1
-        }
-        response = client.post("/trip", json=payload)
-        self.assertEqual(response.status_code, 200)
-
-    def test_create_trip_2(self):
-        payload = {
-            "user_id": self.user_id,
-            "source": "Hyderabad",
-            "destination": "Goa",
-            "start_date": "2026-07-10",
-            "end_date": "2026-07-15",
-            "budget": 25000,
-            "travelers": 3
-        }
-        response = client.post("/trip", json=payload)
-        self.assertEqual(response.status_code, 200)
-
-    def test_create_trip_3(self):
-        payload = {
-            "user_id": self.user_id,
-            "source": "Delhi",
-            "destination": "Mumbai",
-            "start_date": "2026-08-05",
-            "end_date": "2026-08-08",
-            "budget": 30000,
-            "travelers": 2
         }
         response = client.post("/trip", json=payload)
         self.assertEqual(response.status_code, 200)
@@ -135,6 +109,10 @@ class TestTripAPI(unittest.TestCase):
         response = client.post("/trip", json=payload)
         self.assertEqual(response.status_code, 200)
 
+    def test_invalid_user_id(self):
+        response = client.get("/trips/invalid-id")
+        self.assertNotEqual(response.status_code, 200)
+
     def test_get_trips(self):
         response = client.get(f"/trips/{self.user_id}")
         self.assertEqual(response.status_code, 200)
@@ -143,24 +121,80 @@ class TestTripAPI(unittest.TestCase):
         response = client.get("/trips/00000000-0000-0000-0000-000000000000")
         self.assertEqual(response.status_code, 200)
 
-    def test_invalid_user_id(self):
-        response = client.get("/trips/invalid-id")
-        self.assertNotEqual(response.status_code, 200)
-
-    def test_query_last_trip(self):
-        payload = {
-            "user_id": self.user_id,
-            "query": "last mumbai trip budget"
-        }
+    def test_query_past(self):
+        payload = {"user_id": self.user_id, "query": "past trips"}
         response = client.post("/trip/query", json=payload)
         self.assertEqual(response.status_code, 200)
 
-    def test_query_empty(self):
+    def test_query_current(self):
+        payload = {"user_id": self.user_id, "query": "current trip"}
+        response = client.post("/trip/query", json=payload)
+        self.assertEqual(response.status_code, 200)
+
+    def test_query_planned(self):
+        payload = {"user_id": self.user_id, "query": "next trip"}
+        response = client.post("/trip/query", json=payload)
+        self.assertEqual(response.status_code, 200)
+
+    def test_query_unknown(self):
+        payload = {"user_id": self.user_id, "query": "random text"}
+        response = client.post("/trip/query", json=payload)
+        self.assertEqual(response.status_code, 200)
+
+    # 🔥 NEW ADVANCED TESTS
+
+    def test_empty_query(self):
+        payload = {"user_id": self.user_id, "query": ""}
+        response = client.post("/trip/query", json=payload)
+        self.assertEqual(response.status_code, 200)
+
+    def test_case_insensitive_query(self):
+        payload = {"user_id": self.user_id, "query": "PAST TRIPS"}
+        response = client.post("/trip/query", json=payload)
+        self.assertEqual(response.status_code, 200)
+
+    def test_query_specific_destination(self):
+        payload = {"user_id": self.user_id, "query": "goa trip"}
+        response = client.post("/trip/query", json=payload)
+        self.assertEqual(response.status_code, 200)
+
+    def test_create_trip_min_budget(self):
         payload = {
             "user_id": self.user_id,
-            "query": ""
+            "source": "Delhi",
+            "destination": "Agra",
+            "start_date": "2026-05-01",
+            "end_date": "2026-05-02",
+            "budget": 1,
+            "travelers": 1
         }
-        response = client.post("/trip/query", json=payload)
+        response = client.post("/trip", json=payload)
+        self.assertEqual(response.status_code, 200)
+
+    def test_create_trip_large_travelers(self):
+        payload = {
+            "user_id": self.user_id,
+            "source": "Mumbai",
+            "destination": "Goa",
+            "start_date": "2026-05-10",
+            "end_date": "2026-05-15",
+            "budget": 50000,
+            "travelers": 50
+        }
+        response = client.post("/trip", json=payload)
+        self.assertEqual(response.status_code, 200)
+
+    def test_create_trip_empty_strings(self):
+        payload = {
+            "user_id": self.user_id,
+            "source": "",
+            "destination": "",
+            "start_date": "2026-06-01",
+            "end_date": "2026-06-02",
+            "budget": 10000,
+            "travelers": 1
+        }
+        response = client.post("/trip", json=payload)
         self.assertEqual(response.status_code, 200)
 
 

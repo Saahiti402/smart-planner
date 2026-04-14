@@ -988,53 +988,81 @@ def _process_chat(message):
 
 
 def _format_assistant_response(raw):
-    """Return only user-facing answer content and hide metadata chunks."""
+    """
+    Safely extract only user-facing answer content.
+    Prevents infinite recursion from nested dict/list payloads.
+    """
 
-    def parse_payload(value):
+    MAX_DEPTH = 10
+
+    def parse_payload(value, depth=0):
+        # Prevent infinite recursion
+        if depth > MAX_DEPTH:
+            return str(value)
+
         if isinstance(value, str):
             text = value.strip()
             if not text:
                 return ""
 
+            # Try parsing JSON-like strings safely
             if text.startswith("{") or text.startswith("["):
                 try:
-                    return parse_payload(json.loads(text))
+                    parsed = json.loads(text)
+                    return parse_payload(parsed, depth + 1)
                 except Exception:
                     try:
-                        return parse_payload(ast.literal_eval(text))
+                        parsed = ast.literal_eval(text)
+                        return parse_payload(parsed, depth + 1)
                     except Exception:
                         return text
+
             return text
 
-        if isinstance(value, dict):
-            # Prefer explicit answer keys first.
-            for key in ("answer", "response", "final_answer", "message", "result"):
-                if key in value and value[key] not in (None, ""):
-                    return parse_payload(value[key])
+        elif isinstance(value, dict):
+            # Preferred keys first
+            priority_keys = ["answer", "response", "final_answer", "message", "result", "data"]
 
-            # Some payloads embed useful text under data.
-            if "data" in value and value["data"] not in (None, ""):
-                return parse_payload(value["data"])
+            for key in priority_keys:
+                if key in value and value[key] not in (None, "", {}, []):
+                    return parse_payload(value[key], depth + 1)
 
-            # Fallback: return only non-metadata keys.
+            # Remove metadata keys
+            metadata_keys = {
+                "query",
+                "source",
+                "tool",
+                "tool_used",
+                "metadata",
+                "request",
+                "status"
+            }
+
             filtered = {
                 k: v for k, v in value.items()
-                if k not in {"query", "source", "tool", "tool_used", "metadata", "request", "status"}
+                if k not in metadata_keys
             }
-            if filtered:
-                return parse_payload(filtered)
-            return ""
 
-        if isinstance(value, list):
-            parts = [parse_payload(item) for item in value]
-            parts = [p for p in parts if isinstance(p, str) and p.strip()]
+            # VERY IMPORTANT FIX
+            # If filtering does not reduce structure, stop recursion
+            if not filtered or filtered == value:
+                return str(value)
+
+            return parse_payload(filtered, depth + 1)
+
+        elif isinstance(value, list):
+            parts = [
+                parse_payload(item, depth + 1)
+                for item in value
+            ]
+            parts = [p for p in parts if str(p).strip()]
             return "\n".join(parts)
 
         return str(value)
 
     cleaned = parse_payload(raw)
-    return cleaned if cleaned else "Sorry, I could not generate a clear answer."
 
+    return cleaned if cleaned else "Sorry, I could not generate a clear answer."
 
 def _to_pretty_html(text: str) -> str:
     """Render assistant text in a more readable and user-friendly format."""

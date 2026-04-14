@@ -1,8 +1,8 @@
 from datetime import date, datetime
 import uuid
 from sqlalchemy.orm import Session
+from fastapi import HTTPException
 from app.models import Trip
-
 
 
 def classify_trip(trip):
@@ -22,13 +22,40 @@ def classify_trip(trip):
 
 
 def create_trip(db: Session, data: dict):
+
+    required_fields = ["user_id", "source", "destination", "start_date", "end_date", "budget", "travelers"]
+
+    for field in required_fields:
+        if field not in data:
+            raise HTTPException(status_code=400, detail=f"{field} is required")
+
+    try:
+        user_id = uuid.UUID(data["user_id"])
+    except:
+        raise HTTPException(status_code=400, detail="Invalid user_id")
+
+    try:
+        start_date = datetime.strptime(data["start_date"], "%Y-%m-%d").date()
+        end_date = datetime.strptime(data["end_date"], "%Y-%m-%d").date()
+    except:
+        raise HTTPException(status_code=400, detail="Invalid date format")
+
+    if start_date > end_date:
+        raise HTTPException(status_code=400, detail="Invalid date range")
+
+    if data["budget"] <= 0:
+        raise HTTPException(status_code=400, detail="Invalid budget")
+
+    if data["travelers"] <= 0:
+        raise HTTPException(status_code=400, detail="Invalid travelers count")
+
     trip = Trip(
         id=uuid.uuid4(),
-        user_id=uuid.UUID(data["user_id"]),
+        user_id=user_id,
         source_location=data["source"],
         destination=data["destination"],
-        start_date=datetime.strptime(data["start_date"], "%Y-%m-%d").date(), 
-        end_date=datetime.strptime(data["end_date"], "%Y-%m-%d").date(),      
+        start_date=start_date,
+        end_date=end_date,
         budget=data["budget"],
         travelers_count=data["travelers"],
         status="planned"
@@ -41,10 +68,15 @@ def create_trip(db: Session, data: dict):
     return trip
 
 
-
 def get_all_trips(db: Session, user_id: str):
+
+    try:
+        user_uuid = uuid.UUID(user_id)
+    except:
+        raise HTTPException(status_code=400, detail="Invalid user_id")
+
     trips = db.query(Trip).filter(
-        Trip.user_id == uuid.UUID(user_id)
+        Trip.user_id == user_uuid
     ).all()
 
     result = []
@@ -53,7 +85,7 @@ def get_all_trips(db: Session, user_id: str):
         result.append({
             "trip_id": str(trip.id),
             "destination": trip.destination,
-            "status": classify_trip(trip),   
+            "status": classify_trip(trip),
             "budget": trip.budget,
             "start_date": str(trip.start_date),
             "end_date": str(trip.end_date)
@@ -62,14 +94,16 @@ def get_all_trips(db: Session, user_id: str):
     return result
 
 
-# ==========================
-# NATURAL LANGUAGE QUERY
-# ==========================
 def query_user_trips(db: Session, user_id: str, query: str):
     query = query.lower()
 
+    try:
+        user_uuid = uuid.UUID(user_id)
+    except:
+        raise HTTPException(status_code=400, detail="Invalid user_id")
+
     trips = db.query(Trip).filter(
-        Trip.user_id == uuid.UUID(user_id)
+        Trip.user_id == user_uuid
     ).all()
 
     if not trips:
@@ -87,11 +121,6 @@ def query_user_trips(db: Session, user_id: str, query: str):
         else:
             planned.append(trip)
 
-    # --------------------------
-    # QUERY CASES
-    # --------------------------
-
-    # 1. Past trips
     if "past" in query:
         return {
             "answer": "Here are your past trips",
@@ -104,7 +133,6 @@ def query_user_trips(db: Session, user_id: str, query: str):
             ]
         }
 
-    # 2. Current trip
     if "current" in query or "status" in query:
         if ongoing:
             t = ongoing[0]
@@ -117,7 +145,6 @@ def query_user_trips(db: Session, user_id: str, query: str):
             }
         return {"answer": "No ongoing trips"}
 
-    # 3. Last trip to a city (example: Goa)
     for trip in sorted(trips, key=lambda x: x.start_date, reverse=True):
         if trip.destination.lower() in query:
             return {
@@ -127,7 +154,6 @@ def query_user_trips(db: Session, user_id: str, query: str):
                 "end_date": str(trip.end_date)
             }
 
-    # 4. Planned trips (UPDATED)
     if "planned" in query or "next" in query:
         return {
             "answer": "Your planned trips",

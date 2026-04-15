@@ -257,6 +257,7 @@ st.markdown("""
         padding: 18px 20px;
         margin-bottom: 14px;
         box-shadow: var(--shadow);
+        color: var(--ink);
     }
 
     .hero {
@@ -1209,7 +1210,7 @@ def _render_itinerary_result(data, destination, budget):
     c3.metric("👥 Travelers",  recommendations.get("travelers", "—"))
     c4.metric("💰 Budget",     f"₹{int(budget):,}")
 
-    tab_plan, tab_budget, tab_agent = st.tabs(["📅 Day Plan", "💰 Budget Breakdown", "🤖 Agent Log"])
+    tab_plan, tab_budget = st.tabs(["📅 Day Plan", "💰 Budget Breakdown"])
 
     with tab_plan:
         st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
@@ -1259,7 +1260,7 @@ def _render_itinerary_result(data, destination, budget):
                 <div class="budget-bar-wrap">
                     <div class="budget-bar-label">
                         <span>{label}</span>
-                        <span style="color:#1f2a37;font-weight:600;">₹{int(amount):,} ({pct}%)</span>
+                        <span style="color:#f8fafc;font-weight:700;">₹{int(amount):,} ({pct}%)</span>
                     </div>
                     <div class="budget-bar-track">
                         <div class="budget-bar-fill" style="width:{pct}%;"></div>
@@ -1269,23 +1270,14 @@ def _render_itinerary_result(data, destination, budget):
             st.markdown(f"""
             <div class="stp-card" style="margin-top:12px;">
                 <div style="display:flex;justify-content:space-between;align-items:center;">
-                    <div style="font-size:14px;font-weight:700;">Hotel Per Night</div>
+                    <div style="font-size:14px;font-weight:700;color:#0f172a;">Hotel Per Night</div>
                     <div style="font-size:22px;font-weight:800;color:#2563eb;">₹{breakdown.get('hotel_per_night',0):,}</div>
                 </div>
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;">
-                    <div style="font-size:14px;font-weight:700;">Grand Total</div>
+                    <div style="font-size:14px;font-weight:700;color:#0f172a;">Grand Total</div>
                     <div style="font-size:22px;font-weight:800;color:#059669;">₹{breakdown.get('grand_total',0):,}</div>
                 </div>
             </div>""", unsafe_allow_html=True)
-
-    with tab_agent:
-        agent_log = data.get("agent_decision", {})
-        if agent_log:
-            for step, detail in agent_log.items():
-                with st.expander(f"🔎 {step.replace('_',' ').title()}"):
-                    st.json(detail)
-        else:
-            st.info("No agent decision log returned.")
 
 # ─────────────────────────────────────────────────────────────
 # PAGE: BUDGET OPTIMIZER

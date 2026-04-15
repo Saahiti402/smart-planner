@@ -584,5 +584,213 @@ class TestItineraryService(unittest.TestCase):
         self.assertEqual(len(itinerary), 30)
         self.assertIn("day_30", itinerary)
 
+    # =========================================================
+    # BATCH 4 — 20 MORE TEST CASES (51 – 70)
+    # =========================================================
+
+    # ────────────────────────────────────────────────────────
+    # GROUP D: _parse_itinerary — formatting robustness (51–57)
+    # ────────────────────────────────────────────────────────
+
+    def test_parse_itinerary_case_insensitive_labels(self):
+        """51. Parser should handle mixed-case day and time labels."""
+        llm_response = """
+        dAy 1:
+        mOrNiNg: Sunrise point.
+        aFtErNoOn: Museum walk.
+        eVeNiNg: Street food tour.
+        """
+        itinerary = _parse_itinerary(llm_response, total_days=1, destination="Varanasi")
+
+        self.assertIn("Sunrise point.", itinerary["day_1"]["morning"])
+        self.assertIn("Museum walk.", itinerary["day_1"]["afternoon"])
+        self.assertIn("Street food tour.", itinerary["day_1"]["evening"])
+
+    def test_parse_itinerary_hyphen_separators(self):
+        """52. Parser should accept hyphen separators after labels."""
+        llm_response = """
+        Day 1-
+        Morning- Temple visit.
+        Afternoon- Cafe hopping.
+        Evening- Local market.
+        """
+        itinerary = _parse_itinerary(llm_response, total_days=1, destination="Madurai")
+
+        self.assertIn("Temple visit.", itinerary["day_1"]["morning"])
+        self.assertIn("Cafe hopping.", itinerary["day_1"]["afternoon"])
+        self.assertIn("Local market.", itinerary["day_1"]["evening"])
+
+    def test_parse_itinerary_strips_extra_whitespace(self):
+        """53. Parsed values should be trimmed of leading/trailing spaces."""
+        llm_response = "Day 1:\nMorning:    Arrive early.   \nAfternoon:   Lunch.\nEvening:  Rest.   "
+        itinerary = _parse_itinerary(llm_response, total_days=1, destination="Lucknow")
+
+        self.assertEqual(itinerary["day_1"]["morning"], "Arrive early.")
+        self.assertEqual(itinerary["day_1"]["afternoon"], "Lunch.")
+        self.assertEqual(itinerary["day_1"]["evening"], "Rest.")
+
+    def test_parse_itinerary_missing_day_one_uses_fallback(self):
+        """54. If Day 1 block is absent, parser must still return fallback for day_1."""
+        llm_response = "Day 2:\nMorning: Start second day.\nAfternoon: Continue.\nEvening: End."
+        itinerary = _parse_itinerary(llm_response, total_days=2, destination="Udaipur")
+
+        self.assertEqual(itinerary["day_1"]["morning"], "Explore top attractions in Udaipur")
+        self.assertIn("Start second day.", itinerary["day_2"]["morning"])
+
+    def test_parse_itinerary_ignores_extra_days_beyond_requested(self):
+        """55. Parser should only build keys up to total_days."""
+        llm_response = """
+        Day 1:
+        Morning: A.
+        Afternoon: B.
+        Evening: C.
+
+        Day 2:
+        Morning: D.
+        Afternoon: E.
+        Evening: F.
+        """
+        itinerary = _parse_itinerary(llm_response, total_days=1, destination="Goa")
+
+        self.assertIn("day_1", itinerary)
+        self.assertNotIn("day_2", itinerary)
+
+    def test_parse_itinerary_day_heading_without_colon(self):
+        """56. Day heading without ':' should still parse due optional separator."""
+        llm_response = "Day 1\nMorning: Beach walk.\nAfternoon: Lunch.\nEvening: Sunset."
+        itinerary = _parse_itinerary(llm_response, total_days=1, destination="Puri")
+
+        self.assertIn("Beach walk.", itinerary["day_1"]["morning"])
+
+    def test_parse_itinerary_unicode_destination_in_fallback(self):
+        """57. Fallback text should preserve non-ASCII destination names."""
+        itinerary = _parse_itinerary("", total_days=1, destination="São Paulo")
+        self.assertIn("São Paulo", itinerary["day_1"]["morning"])
+
+    # ────────────────────────────────────────────────────────
+    # GROUP E: _budget_breakdown — ratio and rounding checks (58–63)
+    # ────────────────────────────────────────────────────────
+
+    def test_budget_breakdown_uppercase_transport_falls_to_other_ratio(self):
+        """58. Case-sensitive transport check means 'TRAIN' uses 15% branch."""
+        breakdown = _budget_breakdown(budget=20000, total_days=2, transport="TRAIN", hotel_type="3-star")
+        self.assertEqual(breakdown["transport"], 3000)
+
+    def test_budget_breakdown_hotel_type_contains_luxury_keyword(self):
+        """59. Any hotel_type containing 'luxury' should use 40% hotel ratio."""
+        breakdown = _budget_breakdown(budget=50000, total_days=5, transport="bus", hotel_type="ultra-luxury")
+        self.assertEqual(breakdown["hotel_total"], 20000)
+
+    def test_budget_breakdown_hotel_type_contains_3star_keyword(self):
+        """60. hotel_type containing '3-star' should use 30% hotel ratio."""
+        breakdown = _budget_breakdown(budget=50000, total_days=5, transport="bus", hotel_type="3-star deluxe")
+        self.assertEqual(breakdown["hotel_total"], 15000)
+
+    def test_budget_breakdown_zero_budget_all_zero(self):
+        """61. Zero budget should produce zero amounts in every field."""
+        breakdown = _budget_breakdown(budget=0, total_days=3, transport="flight", hotel_type="5-star")
+        self.assertEqual(breakdown["hotel_per_night"], 0)
+        self.assertEqual(breakdown["hotel_total"], 0)
+        self.assertEqual(breakdown["transport"], 0)
+        self.assertEqual(breakdown["food"], 0)
+        self.assertEqual(breakdown["misc"], 0)
+        self.assertEqual(breakdown["grand_total"], 0)
+
+    def test_budget_breakdown_rounding_delta_from_budget_is_small(self):
+        """62. Due rounding, grand_total may differ from budget by at most 1."""
+        budget = 9999
+        breakdown = _budget_breakdown(budget=budget, total_days=4, transport="flight", hotel_type="4-star")
+        self.assertLessEqual(abs(breakdown["grand_total"] - budget), 1)
+
+    def test_budget_breakdown_misc_for_flight_3star_is_20_percent(self):
+        """63. flight + 3-star should leave misc at 20%."""
+        breakdown = _budget_breakdown(budget=25000, total_days=5, transport="flight", hotel_type="3-star")
+        self.assertEqual(breakdown["misc"], 5000)
+
+    # ────────────────────────────────────────────────────────
+    # GROUP F: generate_itinerary — prompt/default integration (64–70)
+    # ────────────────────────────────────────────────────────
+
+    @patch('app.services.itinerary_service.ask_groq_llm')
+    def test_generate_itinerary_custom_context_in_prompt(self, mock_llm):
+        """64. Provided destination_context must be embedded into the LLM prompt."""
+        mock_llm.return_value = "Day 1:\nMorning: T.\nAfternoon: T.\nEvening: T."
+        custom_context = "Snow trails and cable car routes."
+
+        generate_itinerary("Delhi", "Manali", "2026-10-01", "2026-10-02", 12000, 2, destination_context=custom_context)
+        prompt = mock_llm.call_args[0][0]
+
+        self.assertIn(custom_context, prompt)
+
+    @patch('app.services.itinerary_service.ask_groq_llm')
+    def test_generate_itinerary_default_context_when_empty(self, mock_llm):
+        """65. Empty destination_context should trigger the default context sentence."""
+        mock_llm.return_value = "Day 1:\nMorning: T.\nAfternoon: T.\nEvening: T."
+
+        generate_itinerary("Delhi", "Agra", "2026-10-01", "2026-10-02", 12000, 2, destination_context="")
+        prompt = mock_llm.call_args[0][0]
+
+        self.assertIn("Provide general travel information about Agra.", prompt)
+
+    @patch('app.services.itinerary_service.ask_groq_llm')
+    def test_generate_itinerary_partial_preferences_merge_with_defaults(self, mock_llm):
+        """66. Missing preference keys should fall back while provided keys remain."""
+        mock_llm.return_value = "Day 1:\nMorning: T.\nAfternoon: T.\nEvening: T."
+        _, recommendations = generate_itinerary(
+            "Delhi", "Jaipur", "2026-10-01", "2026-10-02", 15000, 2,
+            preferences={"transport": "bus", "trip_type": "roadtrip"}
+        )
+
+        self.assertEqual(recommendations["transport"], "bus")
+        self.assertEqual(recommendations["trip_type"], "roadtrip")
+        self.assertEqual(recommendations["hotel"], "3-star")
+        self.assertEqual(recommendations["food_preference"], "vegetarian")
+
+    @patch('app.services.itinerary_service.ask_groq_llm')
+    def test_generate_itinerary_budget_range_from_preferences_in_prompt(self, mock_llm):
+        """67. Explicit budget_min and budget_max should appear in prompt range."""
+        mock_llm.return_value = "Day 1:\nMorning: T.\nAfternoon: T.\nEvening: T."
+        generate_itinerary(
+            "Delhi", "Leh", "2026-10-01", "2026-10-03", 40000, 2,
+            preferences={"budget_min": 30000, "budget_max": 45000}
+        )
+        prompt = mock_llm.call_args[0][0]
+
+        self.assertIn("30,000", prompt)
+        self.assertIn("45,000", prompt)
+
+    @patch('app.services.itinerary_service.ask_groq_llm')
+    def test_generate_itinerary_calls_llm_once(self, mock_llm):
+        """68. Generator should invoke ask_groq_llm exactly once per request."""
+        mock_llm.return_value = "Day 1:\nMorning: A.\nAfternoon: B.\nEvening: C."
+        generate_itinerary("A", "B", "2026-10-01", "2026-10-01", 5000, 1)
+        mock_llm.assert_called_once()
+
+    @patch('app.services.itinerary_service.ask_groq_llm')
+    def test_generate_itinerary_unmatched_days_fallback_applies(self, mock_llm):
+        """69. If LLM gives only Day 1 for 3-day trip, remaining days use fallback."""
+        mock_llm.return_value = "Day 1:\nMorning: First day plan."
+        itinerary, recommendations = generate_itinerary(
+            "Delhi", "Goa", "2026-10-01", "2026-10-03", 30000, 2
+        )
+
+        self.assertEqual(recommendations["total_days"], 3)
+        self.assertIn("First day plan.", itinerary["day_1"]["morning"])
+        self.assertEqual(itinerary["day_2"]["morning"], "Explore top attractions in Goa")
+        self.assertEqual(itinerary["day_3"]["evening"], "Relax and explore local markets in Goa")
+
+    @patch('app.services.itinerary_service.ask_groq_llm')
+    def test_generate_itinerary_recommendation_breakdown_consistency(self, mock_llm):
+        """70. recommendation budget_breakdown grand_total should equal parts sum."""
+        mock_llm.return_value = "Day 1:\nMorning: T.\nAfternoon: T.\nEvening: T."
+        _, recommendations = generate_itinerary(
+            "Delhi", "Nainital", "2026-10-01", "2026-10-04", 36000, 3,
+            preferences={"transport": "train", "hotel_type": "3-star"}
+        )
+
+        breakdown = recommendations["budget_breakdown"]
+        total = breakdown["hotel_total"] + breakdown["transport"] + breakdown["food"] + breakdown["misc"]
+        self.assertEqual(breakdown["grand_total"], total)
+
 if __name__ == "__main__":
     unittest.main()

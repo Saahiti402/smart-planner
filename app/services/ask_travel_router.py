@@ -34,31 +34,64 @@ def route_travel_query(query: str, role: str = "user"):
                 "response": compare_destinations(cities)
             }
 
+       # =====================================================
+    # BUDGET OPTIMIZATION TOOL (NATURAL LANGUAGE)
     # =====================================================
-    # BUDGET OPTIMIZATION TOOL
-    # =====================================================
-    if any(
-        keyword in query_lower
-        for keyword in ["budget", "optimize", "under"]
-    ):
-        budget_match = re.search(r"(\d+)", query_lower)
+    if any(word in query_lower for word in ["budget", "cost", "cheap", "under", "price"]):
 
+        # -------- extract budget --------
+        budget_match = re.search(r'\d{4,7}', query_lower)
+        total_budget = int(budget_match.group()) if budget_match else 15000
+
+        # -------- extract destination --------
         city_match = re.findall(
-            r"(goa|mysore|chennai|switzerland)",
+            r"(goa|mysore|chennai|switzerland|mumbai|delhi)",
             query_lower
         )
+        destination = city_match[0] if city_match else "goa"
 
-        budget = int(budget_match.group(1)) if budget_match else 10000
-        city = city_match[0] if city_match else "goa"
+        # -------- extract trip days --------
+        days_match = re.search(r'(\d+)\s*day', query_lower)
+        trip_days = int(days_match.group(1)) if days_match else 3
+
+        # -------- extract travelers --------
+        travelers_match = re.search(
+            r'(\d+)\s*(people|person|traveler|members)',
+            query_lower
+        )
+        travelers = int(travelers_match.group(1)) if travelers_match else 1
+
+        # -------- transport --------
+        if "flight" in query_lower:
+            preferred_transport = "flight"
+        elif "train" in query_lower:
+            preferred_transport = "train"
+        elif "bus" in query_lower:
+            preferred_transport = "bus"
+        else:
+            preferred_transport = "flight"
+
+        # -------- hotel category --------
+        if "5 star" in query_lower or "luxury" in query_lower:
+            hotel_category = "5-star"
+
+        elif "budget hotel" in query_lower or "cheap hotel" in query_lower:
+            hotel_category = "budget"
+
+        else:
+            hotel_category = "3-star"
 
         return {
             "tool_used": "budget_tool",
             "response": optimize_budget(
-                destination=city,
-                total_budget=budget
+                destination=destination,
+                total_budget=total_budget,
+                travelers=travelers,
+                trip_days=trip_days,
+                preferred_transport=preferred_transport,
+                hotel_category=hotel_category
             )
         }
-
     # =====================================================
     # EXTERNAL TRAVEL TOOL
     # =====================================================

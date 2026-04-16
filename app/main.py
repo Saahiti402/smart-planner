@@ -619,6 +619,10 @@ def ask_travel(
 
 
 # Budget Optimization with Natural Language Input
+@traceable(
+    name="optimize_budget_nl_endpoint",
+    project_name="smart-travel-planner"
+)
 @app.post("/optimize-budget-nl")
 def optimize_budget_natural_language(query: dict):
 
@@ -655,9 +659,11 @@ Text:
     result = optimize_budget(
         destination=parsed["destination"],
         total_budget=parsed["budget"],
-        travelers=parsed["travelers"],
-        trip_days=parsed["trip_days"]
-    )
+        travelers=parsed.get("travelers", 1),
+        trip_days=parsed.get("trip_days", 3),
+        preferred_transport="flight",
+        hotel_category="3-star"
+)
 
     return result
 

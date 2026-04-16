@@ -1,12 +1,16 @@
 import os
 from groq import Groq
 from dotenv import load_dotenv
+from langsmith.run_helpers import traceable
 load_dotenv()
 
 client = Groq(
     api_key=os.getenv("GROQ_API_KEY")
 )
-
+@traceable(
+    name="groq_llm_call",
+    project_name="smart-travel-planner"
+)
 def ask_groq_llm(query: str) -> str:
     try:
         response = client.chat.completions.create(
@@ -32,7 +36,10 @@ def ask_groq_llm(query: str) -> str:
             "Please try again in a moment."
             )
 
-
+@traceable(
+    name="groq_llm_with_context",
+    project_name="smart-travel-planner"
+)
 def ask_groq_llm_with_context(query: str, context: str) -> str:
     """Call Groq LLM with RAG context injected into the system prompt."""
     try:

@@ -5,8 +5,17 @@ from app.services.destination_compare_service import compare_destinations
 from app.services.budget_service import optimize_budget
 from app.services.external_travel_service import external_travel_tool
 from app.services.itinerary_service import generate_itinerary
+from app.services.trip_service import (
+    query_user_trips,
+    get_latest_trip,
+    mark_latest_trip_completed
+)
+from langsmith.run_helpers import traceable
 
-
+@traceable(
+    name="route_travel_query",
+    project_name="smart-travel-planner"
+)
 def route_travel_query(query: str, role: str = "user"):
     query_lower = query.lower()
 
@@ -128,3 +137,30 @@ def route_travel_query(query: str, role: str = "user"):
             role=role
         )
     }
+
+def route_trip_query(query: str, db, user_id: str):
+    query_lower = query.lower()
+
+    if (
+        ("mark" in query_lower or "complete" in query_lower)
+        and "trip" in query_lower
+        and any(word in query_lower for word in ["completed", "done", "finished"])
+    ):
+        return {
+            "tool_used": "trip_management",
+            "response": mark_latest_trip_completed(db, user_id)
+        }
+
+    if "latest" in query_lower or "recent" in query_lower:
+        return {
+            "tool_used": "trip_management",
+            "response": get_latest_trip(db, user_id)
+        }
+
+    if "trip" in query_lower:
+        return {
+            "tool_used": "trip_management",
+            "response": query_user_trips(db, user_id, query)
+        }
+
+    return None

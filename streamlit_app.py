@@ -989,80 +989,114 @@ def _process_chat(message):
 
 def _format_assistant_response(raw):
     """
-    Safely extract only user-facing answer content.
-    Prevents infinite recursion from nested dict/list payloads.
+    Cleanly formats backend responses for Streamlit UI.
+    Converts dict/list/stringified JSON into readable text.
     """
 
-    MAX_DEPTH = 10
+    import json
+    import ast
 
-    def parse_payload(value, depth=0):
-        # Prevent infinite recursion
-        if depth > MAX_DEPTH:
-            return str(value)
-
+    def parse_payload(value):
+        # --------------------------
+        # STRING
+        # --------------------------
         if isinstance(value, str):
             text = value.strip()
+
             if not text:
                 return ""
 
-            # Try parsing JSON-like strings safely
+            # Parse stringified dict/list
             if text.startswith("{") or text.startswith("["):
                 try:
                     parsed = json.loads(text)
-                    return parse_payload(parsed, depth + 1)
+                    return parse_payload(parsed)
                 except Exception:
                     try:
                         parsed = ast.literal_eval(text)
-                        return parse_payload(parsed, depth + 1)
+                        return parse_payload(parsed)
                     except Exception:
                         return text
 
             return text
 
-        elif isinstance(value, dict):
-            # Preferred keys first
-            priority_keys = ["answer", "response", "final_answer", "message", "result", "data"]
-
-            for key in priority_keys:
-                if key in value and value[key] not in (None, "", {}, []):
-                    return parse_payload(value[key], depth + 1)
-
-            # Remove metadata keys
-            metadata_keys = {
-                "query",
-                "source",
-                "tool",
-                "tool_used",
-                "metadata",
-                "request",
-                "status"
-            }
-
-            filtered = {
-                k: v for k, v in value.items()
-                if k not in metadata_keys
-            }
-
-            # VERY IMPORTANT FIX
-            # If filtering does not reduce structure, stop recursion
-            if not filtered or filtered == value:
-                return str(value)
-
-            return parse_payload(filtered, depth + 1)
-
+        # --------------------------
+        # LIST
+        # --------------------------
         elif isinstance(value, list):
-            parts = [
-                parse_payload(item, depth + 1)
+            return "\n".join(
+                parse_payload(item)
                 for item in value
-            ]
-            parts = [p for p in parts if str(p).strip()]
-            return "\n".join(parts)
+            )
 
+        # --------------------------
+        # DICT
+        # --------------------------
+        elif isinstance(value, dict):
+
+            # ==========================
+            # TRIP PLANNING RESPONSE
+            # ==========================
+            if "trip_id" in value and "itinerary" in value:
+                output = []
+
+                output.append(
+                    f"Trip ID: {value.get('trip_id')}"
+                )
+
+                output.append(
+                    f"Destination: {value.get('destination')}"
+                )
+
+                output.append(
+                    f"Status: {value.get('status')}"
+                )
+
+                output.append(
+                    f"Dates: {value.get('start_date')} to {value.get('end_date')}"
+                )
+
+                itinerary = value.get("itinerary", {})
+
+                if isinstance(itinerary, dict):
+                    output.append("\nDay-wise Plan:")
+
+                    for day, details in itinerary.items():
+                        output.append(f"\n{day.upper()}")
+
+                        if isinstance(details, dict):
+                            for slot, plan in details.items():
+                                output.append(
+                                    f"• {slot.capitalize()}: {plan}"
+                                )
+
+                return "\n".join(output)
+
+            # ==========================
+            # GENERIC TOOL RESPONSE
+            # ==========================
+            output = []
+
+            for key, val in value.items():
+                if isinstance(val, dict):
+                    output.append(f"\n{key.upper()}:")
+                    output.append(parse_payload(val))
+                else:
+                    output.append(
+                        f"{key}: {parse_payload(val)}"
+                    )
+
+            return "\n".join(output)
+
+        # --------------------------
+        # FALLBACK
+        # --------------------------
         return str(value)
 
-    cleaned = parse_payload(raw)
+    result = parse_payload(raw)
 
-    return cleaned if cleaned else "Sorry, I could not generate a clear answer."
+    return result if result else "No response available."
+
 
 def _to_pretty_html(text: str) -> str:
     """Render assistant text in a more readable and user-friendly format."""
@@ -1073,7 +1107,20 @@ def _to_pretty_html(text: str) -> str:
         return safe
 
     if not isinstance(text, str):
-        text = str(text)
+        text = value.strip()
+        if not text:
+            return ""
+        if text.startswith("{") or text.startswith("["):
+            try:
+                parsed = json.loads(text)
+                return parse_payload(parsed, depth + 1)
+            except Exception:
+                try:
+                    parsed = ast.literal_eval(text)
+                    return parse_payload(parsed, depth + 1)
+                except Exception:
+                    return text
+        return text
 
     cleaned = text.strip()
     if not cleaned:

@@ -18,7 +18,7 @@ def travel_planning_agent(trip_data):
     db = SessionLocal()
 
     try:
-        # ── Step 1: Load saved preferences ───────────────────────────────────
+        #Load saved preferences from DB
         preference = db.query(UserPreference).filter(
             UserPreference.user_id == uuid.UUID(trip_data.user_id)
         ).first()
@@ -37,13 +37,13 @@ def travel_planning_agent(trip_data):
                 "budget_max":      preference.budget_max,
             }
 
-        # ── Step 2: Fetch destination RAG context ─────────────────────────────
+        #Fetch destination RAG context 
         destination_context = get_destination_context(
             trip_data.destination,
             role=role
         )
 
-        # ── Step 3: Generate itinerary via LLM + preferences ─────────────────
+        #Generate itinerary via LLM + preferences
         itinerary, recommendations = generate_itinerary(
             source=trip_data.source_location,
             destination=trip_data.destination,

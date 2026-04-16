@@ -3,7 +3,7 @@ from typing import Dict, List, Optional, Tuple
 
 from langchain_core.documents import Document
 from langchain_core.retrievers import BaseRetriever
-
+from langsmith.run_helpers import traceable
 from app.services.vector_store_service import semantic_search
 from app.services.groq_llm_service import ask_groq_llm, ask_groq_llm_with_context
 # =========================================================
@@ -390,7 +390,10 @@ def extract_relevant_answer(query: str, docs: List[Document]) -> str:
 # =========================================================
 # MAIN QUERY HANDLER
 # =========================================================
-
+@traceable(
+    name="rag_query_service",
+    project_name="smart-travel-planner"
+)
 def query_travel_assistant(
     query: str,
     role: str = "user"

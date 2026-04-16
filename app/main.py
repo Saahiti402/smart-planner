@@ -46,6 +46,7 @@ from app.services.external_travel_service import _fetch_weather_data, _fetch_act
 from typing import Optional
 from pydantic import BaseModel
 from app.services.ask_travel_router import route_travel_query
+from langsmith.run_helpers import traceable
 
 class ExternalTravelToolRequest(BaseModel):
     type: str
@@ -367,7 +368,10 @@ def get_preferences(
         "preferred_climate": preference.preferred_climate
     }
 
-
+@traceable(
+    name="ask_travel_endpoint",
+    project_name="smart-travel-planner"
+)
 @app.get("/ask-travel")
 def ask_travel(
     query: str,
@@ -375,7 +379,7 @@ def ask_travel(
     db: Session = Depends(get_db)
 ):
     # =====================================================
-    # STEP 1: FETCH USER
+    # STEP 1: VALIDATE USER
     # =====================================================
     try:
         user_uuid = uuid.UUID(user_id)
@@ -398,83 +402,41 @@ def ask_travel(
     query_lower = query.lower().strip()
 
     # =====================================================
-    # STEP 2: TRIP MANAGEMENT ACTIONS
+    # STEP 2: TRIP PLANNING / ITINERARY
+    # IMPORTANT: MUST COME BEFORE GENERIC "trip"
     # =====================================================
     if any(
-        phrase in query_lower
-        for phrase in [
-            "mark my recent planned trip as completed",
-            "complete my latest trip",
-            "mark last trip as done",
-            "mark my recent trip as completed"
-        ]
-    ):
-        response = mark_latest_trip_completed(
-            db,
-            user_id
-        )
-        tool_used = "trip_management"
-
-    elif any(
-        phrase in query_lower
-        for phrase in [
-            "show my recent trip",
-            "show my latest trip",
-            "recent trip",
-            "latest trip"
-        ]
-    ):
-        response = get_latest_trip(
-            db,
-            user_id
-        )
-        tool_used = "trip_management"
-
-    elif any(
-        keyword in query_lower
-        for keyword in [
-            "past trip",
-            "past trips",
-            "planned trips",
-            "next trip",
-            "current trip",
-            "trip status"
-        ]
-    ):
-        response = query_user_trips(
-            db,
-            user_id,
-            query
-        )
-        tool_used = "trip_management"
-
-    # =====================================================
-    # STEP 3: NATURAL LANGUAGE TRIP PLANNING + SAVE TO DB
-    # =====================================================
-    elif any(
         keyword in query_lower
         for keyword in [
             "plan trip",
             "trip plan",
-            "plan 3 day",
-            "plan 5 day",
-            "travel plan"
+            "travel plan",
+            "itinerary",
+            "3 day",
+            "5 day",
+            "day trip"
         ]
     ):
-        # -------- detect destination --------
         destination = "Goa"
 
-        if "mysore" in query_lower:
-            destination = "Mysore"
-        elif "chennai" in query_lower:
-            destination = "Chennai"
+        supported_destinations = [
+            "goa",
+            "mysore",
+            "chennai",
+            "mumbai",
+            "switzerland",
+            "delhi"
+        ]
 
-        # -------- dynamic dates --------
+        for city in supported_destinations:
+            if city in query_lower:
+                destination = city.capitalize()
+                break
+
         today = datetime.now().date()
         start_date = today + timedelta(days=1)
-        end_date = start_date + timedelta(days=2)
+        end_date = start_date + timedelta(days=3)
 
-        # -------- create trip --------
         trip_data = {
             "user_id": str(user.id),
             "source": "Bangalore",
@@ -490,7 +452,6 @@ def ask_travel(
             trip_data
         )
 
-        # -------- generate itinerary --------
         routed_response = route_travel_query(
             query=query,
             role=user.role
@@ -506,17 +467,21 @@ def ask_travel(
             []
         )
 
-        # -------- save itinerary --------
-        itinerary_record = Itinerary(
-            trip_id=created_trip.id,
-            day_plan=str(itinerary_text),
-            estimated_cost=created_trip.budget,
-            recommendations=str(recommendations),
-            generated_by_agent=True
-        )
+        # Save itinerary if table/model exists
+        try:
+            itinerary_record = Itinerary(
+                trip_id=created_trip.id,
+                day_plan=str(itinerary_text),
+                estimated_cost=created_trip.budget,
+                recommendations=str(recommendations),
+                generated_by_agent=True
+            )
 
-        db.add(itinerary_record)
-        db.commit()
+            db.add(itinerary_record)
+            db.commit()
+
+        except Exception:
+            db.rollback()
 
         response = {
             "trip_id": str(created_trip.id),
@@ -531,7 +496,71 @@ def ask_travel(
         tool_used = "trip_planning"
 
     # =====================================================
-    # STEP 4: ALL OTHER NATURAL LANGUAGE QUERIES
+    # STEP 3: MARK TRIP COMPLETED
+    # =====================================================
+    elif (
+        ("mark" in query_lower or "complete" in query_lower)
+        and "trip" in query_lower
+        and any(
+            word in query_lower
+            for word in [
+                "completed",
+                "complete",
+                "done",
+                "finished"
+            ]
+        )
+    ):
+        response = mark_latest_trip_completed(
+            db,
+            user_id
+        )
+
+        tool_used = "trip_management"
+
+    # =====================================================
+    # STEP 4: LATEST / RECENT TRIP
+    # =====================================================
+    elif any(
+        phrase in query_lower
+        for phrase in [
+            "latest trip",
+            "recent trip",
+            "show my latest trip",
+            "show my recent trip"
+        ]
+    ):
+        response = get_latest_trip(
+            db,
+            user_id
+        )
+
+        tool_used = "trip_management"
+
+    # =====================================================
+    # STEP 5: TRIP HISTORY / STATUS
+    # =====================================================
+    elif any(
+        keyword in query_lower
+        for keyword in [
+            "trip",
+            "trips",
+            "planned",
+            "past",
+            "current",
+            "status"
+        ]
+    ):
+        response = query_user_trips(
+            db,
+            user_id,
+            query
+        )
+
+        tool_used = "trip_management"
+
+    # =====================================================
+    # STEP 6: ALL OTHER TOOLS
     # =====================================================
     else:
         routed_response = route_travel_query(
@@ -550,40 +579,30 @@ def ask_travel(
         )
 
     # =====================================================
-    # STEP 5: SAVE CONVERSATION
+    # STEP 7: SAVE CONVERSATION
     # =====================================================
-    conversation = Conversation(
-        user_id=user.id,
-        user_message=query,
-        assistant_response=str(response),
-        tool_used=tool_used
-    )
+    try:
+        conversation = Conversation(
+            user_id=user.id,
+            user_message=query,
+            assistant_response=str(response),
+            tool_used=tool_used
+        )
 
-    db.add(conversation)
-    db.commit()
+        db.add(conversation)
+        db.commit()
+
+    except Exception:
+        db.rollback()
 
     # =====================================================
-    # STEP 6: RETURN RESPONSE
+    # STEP 8: RETURN RESPONSE
     # =====================================================
     return {
         "user_role": user.role,
         "tool_used": tool_used,
         "response": response
     }
-# Budget Optimization with Structured Input
-@app.post("/optimize-budget")
-def optimize_budget_api(data: dict):
-
-    result = optimize_budget(
-        destination=data["destination"],
-        total_budget=data["budget"],
-        travelers=data.get("travelers", 1),
-        trip_days=data.get("trip_days", 1),
-        preferred_transport=data.get("preferred_transport", "flight"),
-        hotel_category=data.get("hotel_category", "3-star")
-    )
-
-    return result
 
 
 # Budget Optimization with Natural Language Input

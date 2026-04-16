@@ -95,13 +95,15 @@ def get_all_trips(db: Session, user_id: str):
 
 
 def query_user_trips(db: Session, user_id: str, query: str):
-
-    query = query.lower()
+    query = query.lower().strip()
 
     try:
         user_uuid = uuid.UUID(user_id)
-    except:
-        raise HTTPException(status_code=400, detail="Invalid user_id")
+    except Exception:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid user_id"
+        )
 
     trips = db.query(Trip).filter(
         Trip.user_id == user_uuid
@@ -110,6 +112,7 @@ def query_user_trips(db: Session, user_id: str, query: str):
     if not trips:
         return {"answer": "No trips found"}
 
+    # classify trips
     past, ongoing, planned = [], [], []
 
     for trip in trips:
@@ -122,6 +125,35 @@ def query_user_trips(db: Session, user_id: str, query: str):
         else:
             planned.append(trip)
 
+    # =====================================================
+    # ALL TRIPS
+    # =====================================================
+    if (
+        "all" in query
+        or "show my trips" in query
+        or "my trips" in query
+    ):
+        return {
+            "answer": "Here are all your trips",
+            "data": [
+                {
+                    "destination": t.destination,
+                    "status": classify_trip(t),
+                    "start_date": str(t.start_date),
+                    "end_date": str(t.end_date),
+                    "budget": t.budget
+                }
+                for t in sorted(
+                    trips,
+                    key=lambda x: x.start_date,
+                    reverse=True
+                )
+            ]
+        }
+
+    # =====================================================
+    # PAST TRIPS
+    # =====================================================
     if "past" in query:
         return {
             "answer": "Here are your past trips",
@@ -130,10 +162,14 @@ def query_user_trips(db: Session, user_id: str, query: str):
                     "destination": t.destination,
                     "budget": t.budget,
                     "dates": f"{t.start_date} to {t.end_date}"
-                } for t in past
+                }
+                for t in past
             ]
         }
 
+    # =====================================================
+    # CURRENT TRIP
+    # =====================================================
     if "current" in query or "status" in query:
         if ongoing:
             t = ongoing[0]
@@ -144,9 +180,35 @@ def query_user_trips(db: Session, user_id: str, query: str):
                 "end_date": str(t.end_date),
                 "budget": t.budget
             }
+
         return {"answer": "No ongoing trips"}
 
-    for trip in sorted(trips, key=lambda x: x.start_date, reverse=True):
+    # =====================================================
+    # PLANNED / NEXT TRIPS
+    # =====================================================
+    if (
+        "planned" in query
+        or "next" in query
+    ):
+        return {
+            "answer": "Your planned trips",
+            "data": [
+                {
+                    "destination": t.destination,
+                    "start_date": str(t.start_date)
+                }
+                for t in planned
+            ]
+        }
+
+    # =====================================================
+    # DESTINATION SPECIFIC
+    # =====================================================
+    for trip in sorted(
+        trips,
+        key=lambda x: x.start_date,
+        reverse=True
+    ):
         if trip.destination.lower() in query:
             return {
                 "answer": f"Last trip to {trip.destination}",
@@ -155,18 +217,9 @@ def query_user_trips(db: Session, user_id: str, query: str):
                 "end_date": str(trip.end_date)
             }
 
-    if "planned" in query or "next" in query:
-        return {
-            "answer": "Your planned trips",
-            "data": [
-                {
-                    "destination": t.destination,
-                    "start_date": str(t.start_date)
-                } for t in planned
-            ]
-        }
-
-    return {"answer": "Sorry, I couldn't understand your query"}
+    return {
+        "answer": "Sorry, I couldn't understand your trip query"
+    }
 
 def mark_latest_trip_completed(db: Session, user_id: str):
     latest_trip = db.query(Trip).filter(

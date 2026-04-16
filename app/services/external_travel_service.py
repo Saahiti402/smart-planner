@@ -4,12 +4,6 @@ import functools
 import re
 from langchain_core.tools import tool
 from datetime import datetime, timedelta
-from dotenv import load_dotenv
-from langsmith.run_helpers import traceable
-
-load_dotenv()
-
-LANGSMITH_PROJECT = os.getenv("LANGSMITH_PROJECT", "smart-travel-planner")
 
 SERPAPI_KEY = os.getenv("SERPAPI_KEY")
 OPENWEATHER_API_KEY = os.getenv("OPENWEATHER_API_KEY")
@@ -249,50 +243,30 @@ def _fetch_activities_data(city: str) -> str:
 # --- LangChain Tools ---
 
 @tool
-@traceable(
-    name="fetch_flights_tool",
-    project_name=LANGSMITH_PROJECT
-)
 def fetch_flights(origin: str, destination: str, date: str, return_date: str = None) -> str:
     """Fetch flight info from SerpApi. If round trip, pass return_date (YYYY-MM-DD)."""
     return _fetch_flights_data(origin, destination, date, return_date)
 
 
 @tool
-@traceable(
-    name="fetch_hotels_tool",
-    project_name=LANGSMITH_PROJECT
-)
 def fetch_hotels(city: str, check_in: str, check_out: str) -> str:
     """Fetch hotel info from SerpApi."""
     return _fetch_hotels_data(city, check_in, check_out)
 
 
 @tool
-@traceable(
-    name="fetch_weather_tool",
-    project_name=LANGSMITH_PROJECT
-)
 def fetch_weather(city: str) -> str:
     """Fetch weather forecast from OpenWeatherMap."""
     return _fetch_weather_data(city)
 
 
 @tool
-@traceable(
-    name="fetch_activities_tool",
-    project_name=LANGSMITH_PROJECT
-)
 def fetch_activities(city: str) -> str:
     """Fetch tourist attractions from SerpApi."""
     return _fetch_activities_data(city)
 
 
 @tool
-@traceable(
-    name="external_travel_router",
-    project_name=LANGSMITH_PROJECT
-)
 def external_travel_tool(query: str) -> str:
     """
     Master LangChain tool acting as a router.

@@ -2,25 +2,232 @@
 Hotels:
 - Sea Breeze Inn | Budget | INR 2500/night | Free breakfast | Calangute
 - Palm Beach Resort | Premium | INR 4800/night | Pool + breakfast | Baga
-- Azure Sands Resort | Luxury | INR 6500/night | Beachfront + spa
+- Azure Sands Resort | Luxury | INR 6500/night | Beachfront + spa | Candolim
 
 Check-in: 12:00 PM
 Check-out: 11:00 AM
 
 === CITY: MYSORE ===
 Hotels:
-- Royal Comfort | Budget | INR 1800/night | Near palace
-- Palace Residency | Heritage | INR 3500/night | Breakfast included
-- Mysore Grand | Luxury | INR 5000/night | City center
+- Royal Comfort | Budget | INR 1800/night | Near palace | City center
+- Palace Residency | Heritage | INR 3500/night | Breakfast included | Heritage district
+- Mysore Grand | Luxury | INR 5000/night | City center | Fine dining
 
 Check-in: 1:00 PM
 Check-out: 11:00 AM
 
 === CITY: CHENNAI ===
 Hotels:
-- Marina Stay | Budget | INR 2000/night | Near beach
-- Chennai Central Suites | Business | INR 3800/night | WiFi + breakfast
-- Bayview Grand | Premium | INR 5500/night | Sea view
+- Marina Stay | Budget | INR 2000/night | Near beach | Triplicane
+- Chennai Central Suites | Business | INR 3800/night | WiFi + breakfast | Egmore
+- Bayview Grand | Premium | INR 5500/night | Sea view | Besant Nagar
 
 Check-in: 12:00 PM
 Check-out: 10:00 AM
+
+=== CITY: DELHI ===
+Hotels:
+- Capital Inn | Budget | INR 2200/night | Metro access | Paharganj
+- Connaught Place Suites | Business | INR 4500/night | Breakfast + WiFi | Central Delhi
+- Imperial Heights | Luxury | INR 8000/night | Spa + dining | New Delhi
+
+Check-in: 12:00 PM
+Check-out: 11:00 AM
+
+=== CITY: AGRA ===
+Hotels:
+- Taj View Lodge | Budget | INR 2100/night | Taj-facing rooms | Taj Ganj
+- Mughal Retreat | Mid-range | INR 3600/night | Breakfast included | Near fort
+- Yamuna Palace | Luxury | INR 6000/night | Pool + rooftop dining | Taj corridor
+
+Check-in: 1:00 PM
+Check-out: 11:00 AM
+
+=== CITY: JAIPUR ===
+Hotels:
+- Pink City Stay | Budget | INR 2300/night | Rooftop cafe | MI Road
+- Hawa Mahal Residency | Heritage | INR 4200/night | Courtyard + breakfast | Old city
+- Rajputana Palace | Luxury | INR 7600/night | Pool + spa | C-Scheme
+
+Check-in: 12:00 PM
+Check-out: 11:00 AM
+
+=== CITY: UDAIPUR ===
+Hotels:
+- Lake Side Inn | Budget | INR 2400/night | Lake access | Lal Ghat
+- City Palace Heritage | Heritage | INR 4300/night | Heritage interiors | Old city
+- Fateh View Resort | Luxury | INR 8200/night | Lake views + spa | Fatehsagar area
+
+Check-in: 12:00 PM
+Check-out: 11:00 AM
+
+=== CITY: JODHPUR ===
+Hotels:
+- Blue Lane Lodge | Budget | INR 2100/night | Old city lanes | Clock Tower
+- Mehrangarh Heritage Stay | Heritage | INR 3900/night | Fort views | Old Jodhpur
+- Umaid Luxury Suites | Luxury | INR 7000/night | Pool + fine dining | Airport road
+
+Check-in: 12:00 PM
+Check-out: 11:00 AM
+
+=== CITY: VARANASI ===
+Hotels:
+- Ganga View Lodge | Budget | INR 2000/night | Ghat access | Dasaswamedh
+- Banaras Heritage House | Heritage | INR 4100/night | Courtyard stay | Old city
+- Silk City Grand | Luxury | INR 6800/night | River views + spa | Cantonment
+
+Check-in: 1:00 PM
+Check-out: 11:00 AM
+
+=== CITY: KOLKATA ===
+Hotels:
+- Park Street Budget Inn | Budget | INR 2300/night | Central access | Park Street
+- Bengal Heritage Hotel | Business | INR 4200/night | WiFi + breakfast | Esplanade
+- Victoria Grand | Luxury | INR 7600/night | Rooftop dining | Chowringhee
+
+Check-in: 12:00 PM
+Check-out: 11:00 AM
+
+=== CITY: MUMBAI ===
+Hotels:
+- Colaba Comfort | Budget | INR 2800/night | Near Gateway | Colaba
+- Marine Drive Suites | Business | INR 5200/night | Sea-facing rooms | Churchgate
+- Bandra Bay Hotel | Luxury | INR 9500/night | Pool + premium dining | Bandra West
+
+Check-in: 2:00 PM
+Check-out: 12:00 PM
+
+=== CITY: BENGALURU ===
+Hotels:
+- Garden City Inn | Budget | INR 2200/night | Central location | MG Road
+- Tech Park Residences | Business | INR 4300/night | WiFi + workspace | Koramangala
+- Royal Orchid Grand | Luxury | INR 7800/night | Pool + spa | Indiranagar
+
+Check-in: 12:00 PM
+Check-out: 11:00 AM
+
+=== CITY: HYDERABAD ===
+Hotels:
+- Charminar Lodge | Budget | INR 2100/night | Old city access | Laad Bazaar area
+- Deccan Plaza | Business | INR 4100/night | Breakfast + WiFi | Banjara Hills
+- Nizam Palace | Luxury | INR 8600/night | Pool + fine dining | Jubilee Hills
+
+Check-in: 1:00 PM
+Check-out: 11:00 AM
+
+=== CITY: KOCHI ===
+Hotels:
+- Fort Kochi Rooms | Budget | INR 2400/night | Heritage lane stay | Fort Kochi
+- Spice Harbor Hotel | Heritage | INR 4500/night | Colonial style | Mattancherry
+- Malabar Bay Resort | Luxury | INR 8200/night | Sea view + spa | Marine Drive
+
+Check-in: 12:00 PM
+Check-out: 11:00 AM
+
+=== CITY: MUNNAR ===
+Hotels:
+- Tea Valley Stay | Budget | INR 2200/night | Plantation views | Munnar town
+- Misty Hills Resort | Mid-range | INR 4300/night | Breakfast + valley views | Devikulam road
+- Cardamom Grove Retreat | Luxury | INR 7600/night | Premium cottages | Tea estate side
+
+Check-in: 1:00 PM
+Check-out: 11:00 AM
+
+=== CITY: SRINAGAR ===
+Hotels:
+- Dal Lake Houseboat | Budget | INR 3000/night | Houseboat stay | Dal Lake
+- Mughal Garden Retreat | Heritage | INR 5200/night | Garden views | Nishat area
+- Kashmir Palace Hotel | Luxury | INR 9200/night | Lake views + fine dining | Boulevard road
+
+Check-in: 12:00 PM
+Check-out: 11:00 AM
+
+=== CITY: MANALI ===
+Hotels:
+- Riverside Lodge | Budget | INR 2000/night | River view | Old Manali
+- Solang Valley Resort | Mid-range | INR 4200/night | Breakfast + mountain views | Manali bypass
+- Himalayan Heights | Luxury | INR 7800/night | Spa + premium dining | Log Huts area
+
+Check-in: 12:00 PM
+Check-out: 11:00 AM
+
+=== CITY: SHIMLA ===
+Hotels:
+- Mall Road Lodge | Budget | INR 2400/night | Central access | Mall Road
+- Ridge View Heritage | Heritage | INR 4300/night | Colonial style | The Ridge
+- Cedar Peak Resort | Luxury | INR 7900/night | Valley views + spa | Kufri road
+
+Check-in: 12:00 PM
+Check-out: 11:00 AM
+
+=== CITY: AMRITSAR ===
+Hotels:
+- Golden Temple Stay | Budget | INR 2000/night | Walking distance to temple | Old city
+- Heritage Haveli | Heritage | INR 3900/night | Punjabi courtyard style | Heritage lane
+- Amritsar Grand | Luxury | INR 7200/night | Pool + restaurant | Ranjit Avenue
+
+Check-in: 12:00 PM
+Check-out: 11:00 AM
+
+=== CITY: DARJEELING ===
+Hotels:
+- Hill View Lodge | Budget | INR 2200/night | Tea hill views | Mall Road
+- Toy Train Heritage | Heritage | INR 4100/night | Colonial charm | Chowrasta
+- Kanchenjunga Palace | Luxury | INR 7500/night | Premium valley views | Lebong road
+
+Check-in: 1:00 PM
+Check-out: 11:00 AM
+
+=== CITY: GANGTOK ===
+Hotels:
+- MG Marg Stay | Budget | INR 2300/night | Central access | MG Marg
+- Himalayan Crest | Business | INR 4400/night | Breakfast + WiFi | Lower Burtuk
+- Tashi Palace Resort | Luxury | INR 8200/night | Mountain views | Tadong
+
+Check-in: 12:00 PM
+Check-out: 11:00 AM
+
+=== CITY: PUNE ===
+Hotels:
+- Deccan Budget Stay | Budget | INR 2100/night | Student area access | Deccan Gymkhana
+- Koregaon Park Suites | Business | INR 4300/night | WiFi + breakfast | Koregaon Park
+- Pune Grand Central | Luxury | INR 7600/night | Pool + dining | Shivajinagar
+
+Check-in: 12:00 PM
+Check-out: 11:00 AM
+
+=== CITY: AHMEDABAD ===
+Hotels:
+- Sabarmati Lodge | Budget | INR 2000/night | Near ashram | Ashram road
+- Heritage Plaza | Business | INR 3900/night | Breakfast + WiFi | CG Road
+- Adalaj Palace | Luxury | INR 7000/night | Premium dining | SG Highway
+
+Check-in: 12:00 PM
+Check-out: 11:00 AM
+
+=== CITY: RISHIKESH ===
+Hotels:
+- Ganga View Lodge | Budget | INR 2200/night | Riverside access | Tapovan
+- Yoga Retreat Stay | Mid-range | INR 4200/night | Yoga + breakfast | Swarg Ashram
+- Himalayan River Resort | Luxury | INR 7800/night | Riverside cottages | Shivpuri road
+
+Check-in: 12:00 PM
+Check-out: 11:00 AM
+
+=== CITY: LEH-LADAKH ===
+Hotels:
+- Leh Base Camp | Budget | INR 2500/night | Simple stay | Leh market area
+- Nubra Valley Retreat | Mid-range | INR 4500/night | Scenic cabins | Nubra route
+- Ladakh Grand Hotel | Luxury | INR 8500/night | Mountain views + heated rooms | Changspa
+
+Check-in: 12:00 PM
+Check-out: 10:00 AM
+
+=== CITY: COORG ===
+Hotels:
+- Coffee County Stay | Budget | INR 2100/night | Plantation views | Madikeri
+- Abbey Falls Resort | Mid-range | INR 4200/night | Breakfast + greenery | Kushalnagar road
+- Kodagu Hill Retreat | Luxury | INR 7600/night | Premium cottages | Madikeri outskirts
+
+Check-in: 1:00 PM
+Check-out: 11:00 AM

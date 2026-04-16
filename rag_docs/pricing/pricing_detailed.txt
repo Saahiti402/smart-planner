@@ -33,3 +33,279 @@ Internal Pricing (ADMIN ONLY):
 - Margin: INR 3300
 - Supplier hotel rate: INR 3800
 - Transport vendor cost: INR 1800
+
+=== CITY: DELHI ===
+Public Pricing:
+- Final package price: INR 15500
+- Discount offer: INR 14999
+- 3 day trip price: INR 14250
+Internal Pricing (ADMIN ONLY):
+- Vendor cost: INR 11800
+- Selling price: INR 15500
+- Margin: INR 3700
+- Supplier hotel rate: INR 4200
+- Transport vendor cost: INR 1900
+
+=== CITY: AGRA ===
+Public Pricing:
+- Final package price: INR 9800
+- Discount offer: INR 9499
+- 2 day trip price: INR 8999
+Internal Pricing (ADMIN ONLY):
+- Vendor cost: INR 7200
+- Selling price: INR 9800
+- Margin: INR 2600
+- Supplier hotel rate: INR 2600
+- Transport vendor cost: INR 1200
+
+=== CITY: JAIPUR ===
+Public Pricing:
+- Final package price: INR 14500
+- Discount offer: INR 13999
+- 3 day trip price: INR 13250
+Internal Pricing (ADMIN ONLY):
+- Vendor cost: INR 10800
+- Selling price: INR 14500
+- Margin: INR 3700
+- Supplier hotel rate: INR 3900
+- Transport vendor cost: INR 1700
+
+=== CITY: UDAIPUR ===
+Public Pricing:
+- Final package price: INR 16800
+- Discount offer: INR 16199
+- 3 day trip price: INR 15499
+Internal Pricing (ADMIN ONLY):
+- Vendor cost: INR 12600
+- Selling price: INR 16800
+- Margin: INR 4200
+- Supplier hotel rate: INR 4500
+- Transport vendor cost: INR 1800
+
+=== CITY: JODHPUR ===
+Public Pricing:
+- Final package price: INR 13200
+- Discount offer: INR 12799
+- 3 day trip price: INR 11999
+Internal Pricing (ADMIN ONLY):
+- Vendor cost: INR 9800
+- Selling price: INR 13200
+- Margin: INR 3400
+- Supplier hotel rate: INR 3600
+- Transport vendor cost: INR 1600
+
+=== CITY: VARANASI ===
+Public Pricing:
+- Final package price: INR 10800
+- Discount offer: INR 10499
+- 3 day trip price: INR 9999
+Internal Pricing (ADMIN ONLY):
+- Vendor cost: INR 7900
+- Selling price: INR 10800
+- Margin: INR 2900
+- Supplier hotel rate: INR 2800
+- Transport vendor cost: INR 1400
+
+=== CITY: KOLKATA ===
+Public Pricing:
+- Final package price: INR 13600
+- Discount offer: INR 12999
+- 3 day trip price: INR 12499
+Internal Pricing (ADMIN ONLY):
+- Vendor cost: INR 10200
+- Selling price: INR 13600
+- Margin: INR 3400
+- Supplier hotel rate: INR 3500
+- Transport vendor cost: INR 1700
+
+=== CITY: MUMBAI ===
+Public Pricing:
+- Final package price: INR 19200
+- Discount offer: INR 18499
+- 3 day trip price: INR 17699
+Internal Pricing (ADMIN ONLY):
+- Vendor cost: INR 14500
+- Selling price: INR 19200
+- Margin: INR 4700
+- Supplier hotel rate: INR 5200
+- Transport vendor cost: INR 2200
+
+=== CITY: BENGALURU ===
+Public Pricing:
+- Final package price: INR 14800
+- Discount offer: INR 14299
+- 3 day trip price: INR 13699
+Internal Pricing (ADMIN ONLY):
+- Vendor cost: INR 11100
+- Selling price: INR 14800
+- Margin: INR 3700
+- Supplier hotel rate: INR 3900
+- Transport vendor cost: INR 1700
+
+=== CITY: HYDERABAD ===
+Public Pricing:
+- Final package price: INR 14100
+- Discount offer: INR 13499
+- 3 day trip price: INR 12999
+Internal Pricing (ADMIN ONLY):
+- Vendor cost: INR 10600
+- Selling price: INR 14100
+- Margin: INR 3500
+- Supplier hotel rate: INR 3700
+- Transport vendor cost: INR 1800
+
+=== CITY: KOCHI ===
+Public Pricing:
+- Final package price: INR 15900
+- Discount offer: INR 15299
+- 3 day trip price: INR 14599
+Internal Pricing (ADMIN ONLY):
+- Vendor cost: INR 12000
+- Selling price: INR 15900
+- Margin: INR 3900
+- Supplier hotel rate: INR 4300
+- Transport vendor cost: INR 1800
+
+=== CITY: MUNNAR ===
+Public Pricing:
+- Final package price: INR 14900
+- Discount offer: INR 14299
+- 3 day trip price: INR 13699
+Internal Pricing (ADMIN ONLY):
+- Vendor cost: INR 11200
+- Selling price: INR 14900
+- Margin: INR 3700
+- Supplier hotel rate: INR 4000
+- Transport vendor cost: INR 1700
+
+=== CITY: SRINAGAR ===
+Public Pricing:
+- Final package price: INR 21800
+- Discount offer: INR 20999
+- 4 day trip price: INR 19999
+Internal Pricing (ADMIN ONLY):
+- Vendor cost: INR 16400
+- Selling price: INR 21800
+- Margin: INR 5400
+- Supplier hotel rate: INR 5800
+- Transport vendor cost: INR 2400
+
+=== CITY: MANALI ===
+Public Pricing:
+- Final package price: INR 16800
+- Discount offer: INR 16199
+- 3 day trip price: INR 15499
+Internal Pricing (ADMIN ONLY):
+- Vendor cost: INR 12700
+- Selling price: INR 16800
+- Margin: INR 4100
+- Supplier hotel rate: INR 4300
+- Transport vendor cost: INR 1800
+
+=== CITY: SHIMLA ===
+Public Pricing:
+- Final package price: INR 15800
+- Discount offer: INR 15199
+- 3 day trip price: INR 14499
+Internal Pricing (ADMIN ONLY):
+- Vendor cost: INR 11900
+- Selling price: INR 15800
+- Margin: INR 3900
+- Supplier hotel rate: INR 4100
+- Transport vendor cost: INR 1700
+
+=== CITY: AMRITSAR ===
+Public Pricing:
+- Final package price: INR 11200
+- Discount offer: INR 10799
+- 2 day trip price: INR 9999
+Internal Pricing (ADMIN ONLY):
+- Vendor cost: INR 8200
+- Selling price: INR 11200
+- Margin: INR 3000
+- Supplier hotel rate: INR 3000
+- Transport vendor cost: INR 1300
+
+=== CITY: DARJEELING ===
+Public Pricing:
+- Final package price: INR 17400
+- Discount offer: INR 16799
+- 3 day trip price: INR 15999
+Internal Pricing (ADMIN ONLY):
+- Vendor cost: INR 13200
+- Selling price: INR 17400
+- Margin: INR 4200
+- Supplier hotel rate: INR 4600
+- Transport vendor cost: INR 1800
+
+=== CITY: GANGTOK ===
+Public Pricing:
+- Final package price: INR 18200
+- Discount offer: INR 17599
+- 3 day trip price: INR 16899
+Internal Pricing (ADMIN ONLY):
+- Vendor cost: INR 13800
+- Selling price: INR 18200
+- Margin: INR 4400
+- Supplier hotel rate: INR 4800
+- Transport vendor cost: INR 1900
+
+=== CITY: PUNE ===
+Public Pricing:
+- Final package price: INR 12800
+- Discount offer: INR 12399
+- 3 day trip price: INR 11899
+Internal Pricing (ADMIN ONLY):
+- Vendor cost: INR 9600
+- Selling price: INR 12800
+- Margin: INR 3200
+- Supplier hotel rate: INR 3400
+- Transport vendor cost: INR 1500
+
+=== CITY: AHMEDABAD ===
+Public Pricing:
+- Final package price: INR 12400
+- Discount offer: INR 11999
+- 3 day trip price: INR 11499
+Internal Pricing (ADMIN ONLY):
+- Vendor cost: INR 9300
+- Selling price: INR 12400
+- Margin: INR 3100
+- Supplier hotel rate: INR 3300
+- Transport vendor cost: INR 1500
+
+=== CITY: RISHIKESH ===
+Public Pricing:
+- Final package price: INR 11600
+- Discount offer: INR 11199
+- 2 day trip price: INR 10499
+Internal Pricing (ADMIN ONLY):
+- Vendor cost: INR 8700
+- Selling price: INR 11600
+- Margin: INR 2900
+- Supplier hotel rate: INR 3000
+- Transport vendor cost: INR 1400
+
+=== CITY: LEH-LADAKH ===
+Public Pricing:
+- Final package price: INR 26800
+- Discount offer: INR 25999
+- 4 day trip price: INR 24999
+Internal Pricing (ADMIN ONLY):
+- Vendor cost: INR 20400
+- Selling price: INR 26800
+- Margin: INR 6400
+- Supplier hotel rate: INR 7100
+- Transport vendor cost: INR 2800
+
+=== CITY: COORG ===
+Public Pricing:
+- Final package price: INR 14600
+- Discount offer: INR 13999
+- 3 day trip price: INR 13399
+Internal Pricing (ADMIN ONLY):
+- Vendor cost: INR 11000
+- Selling price: INR 14600
+- Margin: INR 3600
+- Supplier hotel rate: INR 3800
+- Transport vendor cost: INR 1600

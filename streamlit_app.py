@@ -3,7 +3,7 @@ import requests
 import json
 import ast
 import re
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from html import escape
 
 # ─────────────────────────────────────────────────────────────
@@ -301,6 +301,412 @@ st.markdown("""
     }
     .chat-label { font-size: 11px; color: var(--muted); margin-bottom: 2px; font-weight: 600; }
     .user-label { text-align: right; }
+    .trip-chat {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+    }
+    .trip-chat-hero {
+        background: linear-gradient(135deg, rgba(37, 99, 235, 0.14), rgba(14, 165, 164, 0.10));
+        border: 1px solid rgba(37, 99, 235, 0.16);
+        border-radius: 16px;
+        padding: 16px;
+    }
+    .trip-chat-kicker {
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: .12em;
+        text-transform: uppercase;
+        color: var(--accent);
+        margin-bottom: 6px;
+    }
+    .trip-chat-title {
+        font-family: 'Manrope', sans-serif;
+        font-size: 25px;
+        font-weight: 800;
+        line-height: 1.15;
+        letter-spacing: -0.03em;
+        color: #0f172a;
+        margin-bottom: 8px;
+    }
+    .trip-chat-sub {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+        font-size: 13px;
+        color: #334155;
+    }
+    .trip-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        background: rgba(14, 165, 164, 0.12);
+        border: 1px solid rgba(14, 165, 164, 0.20);
+        color: #0f766e;
+        font-size: 12px;
+        font-weight: 700;
+    }
+    .trip-pill-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    .trip-pill {
+        display: inline-flex;
+        align-items: center;
+        padding: 5px 10px;
+        border-radius: 999px;
+        background: #f8fafc;
+        border: 1px solid var(--line);
+        color: #334155;
+        font-size: 12px;
+        font-weight: 700;
+    }
+    .trip-meta-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 10px;
+    }
+    .trip-meta-card {
+        background: rgba(15, 23, 42, 0.03);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 11px 12px;
+    }
+    .trip-meta-label {
+        display: block;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+        color: #64748b;
+        margin-bottom: 4px;
+    }
+    .trip-meta-value {
+        display: block;
+        color: #0f172a;
+        font-size: 13px;
+        font-weight: 700;
+        line-height: 1.45;
+    }
+    .trip-meta-code {
+        font-family: 'IBM Plex Sans', monospace;
+        font-size: 12px;
+        font-weight: 600;
+        word-break: break-all;
+    }
+    .trip-day-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+    .trip-day-card {
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(248, 250, 252, 0.98));
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 14px 15px;
+    }
+    .trip-day-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 10px;
+    }
+    .trip-day-title {
+        font-size: 12px;
+        font-weight: 800;
+        color: var(--teal);
+        text-transform: uppercase;
+        letter-spacing: .08em;
+    }
+    .trip-day-line {
+        flex: 1;
+        height: 1px;
+        background: linear-gradient(90deg, rgba(14, 165, 164, 0.25), rgba(37, 99, 235, 0));
+    }
+    .trip-slot-list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+    .trip-slot {
+        display: grid;
+        grid-template-columns: 94px 1fr;
+        gap: 12px;
+        align-items: start;
+    }
+    .trip-slot + .trip-slot {
+        border-top: 1px dashed #d8e1eb;
+        padding-top: 10px;
+    }
+    .trip-slot-chip {
+        display: inline-flex;
+        justify-content: center;
+        align-items: center;
+        padding: 5px 10px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: .02em;
+    }
+    .trip-slot-chip.morning {
+        background: rgba(217, 119, 6, 0.12);
+        color: #b45309;
+    }
+    .trip-slot-chip.afternoon {
+        background: rgba(14, 165, 164, 0.12);
+        color: #0f766e;
+    }
+    .trip-slot-chip.evening {
+        background: rgba(37, 99, 235, 0.12);
+        color: #1d4ed8;
+    }
+    .trip-slot-text {
+        color: #1f2937;
+        font-size: 13px;
+        line-height: 1.65;
+    }
+    .pref-summary {
+        background: linear-gradient(135deg, rgba(37, 99, 235, 0.10), rgba(14, 165, 164, 0.08));
+        border: 1px solid rgba(37, 99, 235, 0.14);
+        border-radius: 18px;
+        padding: 18px;
+        margin-bottom: 14px;
+        box-shadow: var(--shadow);
+    }
+    .pref-summary-head {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        align-items: center;
+        margin-bottom: 14px;
+    }
+    .pref-summary-kicker {
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: .12em;
+        text-transform: uppercase;
+        color: var(--accent);
+        margin-bottom: 5px;
+    }
+    .pref-summary-title {
+        font-family: 'Manrope', sans-serif;
+        font-size: 24px;
+        font-weight: 800;
+        line-height: 1.15;
+        letter-spacing: -0.03em;
+        color: #0f172a;
+    }
+    .pref-summary-sub {
+        color: #475569;
+        font-size: 13px;
+        line-height: 1.55;
+        margin-top: 6px;
+    }
+    .pref-summary-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 10px;
+        border-radius: 999px;
+        background: rgba(14, 165, 164, 0.12);
+        border: 1px solid rgba(14, 165, 164, 0.22);
+        color: #0f766e;
+        font-size: 12px;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+    .pref-summary-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 10px;
+    }
+    .pref-summary-item {
+        background: rgba(255, 255, 255, 0.75);
+        border: 1px solid rgba(226, 232, 240, 0.95);
+        border-radius: 13px;
+        padding: 12px 13px;
+    }
+    .pref-summary-label {
+        display: block;
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+        color: #64748b;
+        margin-bottom: 5px;
+    }
+    .pref-summary-value {
+        display: block;
+        color: #0f172a;
+        font-size: 14px;
+        font-weight: 700;
+        line-height: 1.45;
+    }
+    .pref-summary-empty {
+        background: rgba(255, 255, 255, 0.78);
+        border: 1px dashed #cbd5e1;
+        border-radius: 14px;
+        padding: 14px;
+        color: #475569;
+        font-size: 13px;
+        line-height: 1.6;
+    }
+    .budget-chat {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+    }
+    .budget-chat-head {
+        background: linear-gradient(135deg, rgba(217, 119, 6, 0.12), rgba(14, 165, 164, 0.10));
+        border: 1px solid rgba(217, 119, 6, 0.16);
+        border-radius: 16px;
+        padding: 16px;
+    }
+    .budget-chat-kicker {
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: .12em;
+        text-transform: uppercase;
+        color: #b45309;
+        margin-bottom: 6px;
+    }
+    .budget-chat-title {
+        font-family: 'Manrope', sans-serif;
+        font-size: 24px;
+        font-weight: 800;
+        line-height: 1.15;
+        letter-spacing: -0.03em;
+        color: #0f172a;
+        margin-bottom: 8px;
+    }
+    .budget-chat-sub {
+        color: #475569;
+        font-size: 13px;
+        line-height: 1.6;
+    }
+    .budget-chip-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    .budget-chip {
+        display: inline-flex;
+        align-items: center;
+        padding: 5px 10px;
+        border-radius: 999px;
+        background: #fff7ed;
+        border: 1px solid #fed7aa;
+        color: #9a3412;
+        font-size: 12px;
+        font-weight: 700;
+    }
+    .budget-chat-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 10px;
+    }
+    .budget-chat-stat {
+        background: rgba(255, 255, 255, 0.88);
+        border: 1px solid var(--line);
+        border-radius: 13px;
+        padding: 12px 13px;
+    }
+    .budget-chat-label {
+        display: block;
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+        color: #64748b;
+        margin-bottom: 5px;
+    }
+    .budget-chat-value {
+        display: block;
+        color: #0f172a;
+        font-size: 14px;
+        font-weight: 700;
+        line-height: 1.45;
+    }
+    .budget-chat-bars {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+    .budget-chat-bar {
+        background: rgba(15, 23, 42, 0.03);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 10px 12px;
+    }
+    .budget-chat-bar-top {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        align-items: center;
+        margin-bottom: 7px;
+        font-size: 12px;
+    }
+    .budget-chat-bar-name {
+        color: #334155;
+        font-weight: 700;
+        text-transform: capitalize;
+    }
+    .budget-chat-bar-value {
+        color: #0f172a;
+        font-weight: 800;
+    }
+    .budget-chat-track {
+        background: #e2e8f0;
+        border-radius: 999px;
+        height: 10px;
+        overflow: hidden;
+    }
+    .budget-chat-fill {
+        height: 100%;
+        border-radius: 999px;
+    }
+    .budget-chat-note {
+        background: rgba(14, 165, 164, 0.08);
+        border: 1px dashed rgba(14, 165, 164, 0.28);
+        border-radius: 12px;
+        padding: 11px 12px;
+        color: #0f766e;
+        font-size: 12px;
+        line-height: 1.6;
+    }
+    .budget-chat-alert {
+        background: rgba(220, 38, 38, 0.08);
+        border: 1px solid rgba(220, 38, 38, 0.16);
+        border-radius: 14px;
+        padding: 14px;
+    }
+    .budget-chat-alert-title {
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+        color: #b91c1c;
+        margin-bottom: 6px;
+    }
+    .budget-chat-alert-text {
+        color: #7f1d1d;
+        font-size: 13px;
+        line-height: 1.6;
+    }
+    @media (max-width: 768px) {
+        .trip-slot {
+            grid-template-columns: 1fr;
+            gap: 8px;
+        }
+        .trip-day-head {
+            align-items: flex-start;
+        }
+    }
 
     .day-card {
         background: #fff;
@@ -657,7 +1063,15 @@ def go_back():
 def api_post(endpoint, payload):
     try:
         r = requests.post(f"{BASE_URL}{endpoint}", json=payload, timeout=120)
-        return r.json(), r.status_code
+        try:
+            return r.json(), r.status_code
+        except ValueError:
+            return {
+                "error": (
+                    r.text.strip()
+                    or f"Backend returned non-JSON response ({r.status_code})"
+                )
+            }, r.status_code
     except requests.exceptions.ConnectionError:
         return {"error": "Cannot connect to backend. Make sure FastAPI is running on port 8000."}, 503
     except Exception as e:
@@ -666,7 +1080,15 @@ def api_post(endpoint, payload):
 def api_get(endpoint, params=None):
     try:
         r = requests.get(f"{BASE_URL}{endpoint}", params=params, timeout=120)
-        return r.json(), r.status_code
+        try:
+            return r.json(), r.status_code
+        except ValueError:
+            return {
+                "error": (
+                    r.text.strip()
+                    or f"Backend returned non-JSON response ({r.status_code})"
+                )
+            }, r.status_code
     except requests.exceptions.ConnectionError:
         return {"error": "Cannot connect to backend. Make sure FastAPI is running on port 8000."}, 503
     except Exception as e:
@@ -939,8 +1361,10 @@ def render_chat():
             st.markdown(f'<div class="chat-label user-label">You</div>', unsafe_allow_html=True)
             st.markdown(f'<div class="user-bubble">{escape(str(turn["user"]))}</div>', unsafe_allow_html=True)
             st.markdown(f'<div class="chat-label">🤖 TravelAI</div>', unsafe_allow_html=True)
-            bot_text = _format_assistant_response(turn["bot"])
-            st.markdown(f'<div class="bot-bubble">{_to_pretty_html(bot_text)}</div>', unsafe_allow_html=True)
+            st.markdown(
+                f'<div class="bot-bubble">{_assistant_response_to_html(turn["bot"])}</div>',
+                unsafe_allow_html=True
+            )
             if turn.get("tool"):
                 st.markdown(f'<span class="badge-info">🛠 Tool: {turn["tool"]}</span>', unsafe_allow_html=True)
             st.markdown("<div style='height:4px'></div>", unsafe_allow_html=True)
@@ -1058,6 +1482,27 @@ def _format_assistant_response(raw):
                 )
 
                 itinerary = value.get("itinerary", {})
+                day_entries = (
+                    [
+                        (day, details)
+                        for day, details in itinerary.items()
+                        if (
+                            isinstance(day, str)
+                            and re.fullmatch(r"day_\d+", day.lower())
+                            and isinstance(details, dict)
+                        )
+                    ]
+                    if isinstance(itinerary, dict)
+                    else []
+                )
+
+                if (
+                    not day_entries
+                    or len(day_entries) != len(itinerary)
+                ):
+                    output.append("\nItinerary:")
+                    output.append(parse_payload(itinerary))
+                    return "\n".join(output)
 
                 if isinstance(itinerary, dict):
                     output.append("\nDay-wise Plan:")
@@ -1097,6 +1542,418 @@ def _format_assistant_response(raw):
     result = parse_payload(raw)
 
     return result if result else "No response available."
+
+
+def _coerce_response_payload(raw):
+    if isinstance(raw, (dict, list)):
+        return raw
+
+    if isinstance(raw, str):
+        text = raw.strip()
+        if not text:
+            return ""
+
+        if text.startswith("{") or text.startswith("["):
+            try:
+                return json.loads(text)
+            except Exception:
+                try:
+                    return ast.literal_eval(text)
+                except Exception:
+                    return text
+
+        return text
+
+    return raw
+
+
+def _pretty_trip_date(raw_date) -> str:
+    if not raw_date:
+        return "TBD"
+
+    text = str(raw_date).strip()
+    try:
+        return datetime.strptime(text, "%Y-%m-%d").strftime("%d %b %Y")
+    except Exception:
+        return text
+
+
+def _count_label(value, singular: str, plural: str) -> str:
+    try:
+        count = int(value)
+        return f"{count} {singular if count == 1 else plural}"
+    except Exception:
+        return str(value)
+
+
+def _trip_response_to_html(payload):
+    if not isinstance(payload, dict):
+        return None
+
+    itinerary = payload.get("itinerary", {})
+    if not isinstance(itinerary, dict):
+        return None
+
+    day_entries = sorted(
+        [
+            (day, details)
+            for day, details in itinerary.items()
+            if (
+                isinstance(day, str)
+                and re.fullmatch(r"day_\d+", day.lower())
+                and isinstance(details, dict)
+            )
+        ],
+        key=lambda item: int(item[0].split("_")[1])
+    )
+
+    if not day_entries or len(day_entries) != len(itinerary):
+        return None
+
+    recommendations = payload.get("recommendations", {})
+    if not isinstance(recommendations, dict):
+        recommendations = {}
+
+    destination = escape(str(payload.get("destination", "Your Trip")))
+    status = escape(str(payload.get("status", "planned")).replace("_", " ").title())
+    trip_id = escape(str(payload.get("trip_id", "—")))
+    start_date = escape(_pretty_trip_date(payload.get("start_date")))
+    end_date = escape(_pretty_trip_date(payload.get("end_date")))
+
+    total_days = recommendations.get("total_days") or len(day_entries)
+    travelers = recommendations.get("travelers")
+    transport = recommendations.get("transport")
+    hotel = recommendations.get("hotel")
+    trip_type = recommendations.get("trip_type")
+    food_preference = recommendations.get("food_preference")
+
+    pills = []
+    if total_days:
+        pills.append(
+            f"<span class='trip-pill'>{escape(_count_label(total_days, 'day', 'days'))}</span>"
+        )
+    if travelers:
+        pills.append(
+            f"<span class='trip-pill'>{escape(_count_label(travelers, 'traveler', 'travelers'))}</span>"
+        )
+    if transport:
+        pills.append(
+            f"<span class='trip-pill'>{escape(str(transport).replace('-', ' ').title())}</span>"
+        )
+    if hotel:
+        pills.append(
+            f"<span class='trip-pill'>{escape(str(hotel).title())}</span>"
+        )
+    if trip_type:
+        pills.append(
+            f"<span class='trip-pill'>{escape(str(trip_type).replace('_', ' ').title())}</span>"
+        )
+    if food_preference:
+        pills.append(
+            f"<span class='trip-pill'>{escape(str(food_preference).replace('_', ' ').title())}</span>"
+        )
+
+    meta_cards = [
+        (
+            "Trip ID",
+            trip_id,
+            " trip-meta-code"
+        ),
+        (
+            "Travel Dates",
+            f"{start_date} to {end_date}",
+            ""
+        ),
+    ]
+
+    if travelers:
+        meta_cards.append(
+            (
+                "Group Size",
+                escape(_count_label(travelers, "traveler", "travelers")),
+                ""
+            )
+        )
+
+    if transport:
+        meta_cards.append(
+            (
+                "Transport",
+                escape(str(transport).replace("-", " ").title()),
+                ""
+            )
+        )
+
+    day_cards = []
+    for day_key, details in day_entries:
+        day_title = escape(day_key.replace("day_", "Day "))
+        slots = []
+        for slot, label, css_class in [
+            ("morning", "Morning", "morning"),
+            ("afternoon", "Afternoon", "afternoon"),
+            ("evening", "Evening", "evening"),
+        ]:
+            slots.append(
+                "<div class='trip-slot'>"
+                f"<span class='trip-slot-chip {css_class}'>{label}</span>"
+                f"<div class='trip-slot-text'>{escape(str(details.get(slot, '—')))}</div>"
+                "</div>"
+            )
+
+        day_cards.append(
+            "<div class='trip-day-card'>"
+            "<div class='trip-day-head'>"
+            f"<div class='trip-day-title'>{day_title}</div>"
+            "<div class='trip-day-line'></div>"
+            "</div>"
+            f"<div class='trip-slot-list'>{''.join(slots)}</div>"
+            "</div>"
+        )
+
+    meta_html = "".join(
+        [
+            "<div class='trip-meta-card'>"
+            f"<span class='trip-meta-label'>{label}</span>"
+            f"<span class='trip-meta-value{extra_class}'>{value}</span>"
+            "</div>"
+            for label, value, extra_class in meta_cards
+        ]
+    )
+
+    pill_html = (
+        f"<div class='trip-pill-row'>{''.join(pills)}</div>"
+        if pills else ""
+    )
+
+    return (
+        "<div class='trip-chat'>"
+        "<div class='trip-chat-hero'>"
+        "<div class='trip-chat-kicker'>Smart Itinerary</div>"
+        f"<div class='trip-chat-title'>{destination}</div>"
+        "<div class='trip-chat-sub'>"
+        f"<span class='trip-status'>{status}</span>"
+        f"<span>{start_date} to {end_date}</span>"
+        "</div>"
+        "</div>"
+        f"{pill_html}"
+        f"<div class='trip-meta-grid'>{meta_html}</div>"
+        f"<div class='trip-day-list'>{''.join(day_cards)}</div>"
+        "</div>"
+    )
+
+
+def _budget_response_to_html(payload):
+    if not isinstance(payload, dict):
+        return None
+
+    if payload.get("error") and "budget" in str(payload.get("error", "")).lower():
+        example = payload.get("example")
+        example_html = (
+            f"<div class='budget-chat-note'>Example: {escape(str(example))}</div>"
+            if example else ""
+        )
+        return (
+            "<div class='budget-chat'>"
+            "<div class='budget-chat-alert'>"
+            "<div class='budget-chat-alert-title'>Budget Input Needed</div>"
+            f"<div class='budget-chat-alert-text'>{escape(str(payload.get('error')))}</div>"
+            "</div>"
+            f"{example_html}"
+            "</div>"
+        )
+
+    allocation = payload.get("budget_allocation", {})
+    if not isinstance(allocation, dict) or not allocation:
+        return None
+
+    total_budget = payload.get("total_budget") or sum(
+        int(amount) for amount in allocation.values()
+    )
+    destination = escape(str(payload.get("destination", "Trip Budget")))
+    travelers = payload.get("travelers")
+    trip_days = payload.get("trip_days")
+    per_person_budget = payload.get("per_person_budget")
+    per_day_budget = payload.get("per_day_budget")
+    recommended_transport = payload.get("recommended_transport")
+    recommended_hotel = payload.get("recommended_hotel")
+    budget_source = payload.get("budget_source")
+
+    chips = [
+        f"<span class='budget-chip'>{escape(_format_inr(total_budget))} total</span>"
+    ]
+    if travelers:
+        chips.append(
+            f"<span class='budget-chip'>{escape(_count_label(travelers, 'traveler', 'travelers'))}</span>"
+        )
+    if trip_days:
+        chips.append(
+            f"<span class='budget-chip'>{escape(_count_label(trip_days, 'day', 'days'))}</span>"
+        )
+    if budget_source == "saved_preferences":
+        chips.append("<span class='budget-chip'>using saved preferences</span>")
+
+    stats = [
+        ("Per Person", _format_inr(per_person_budget)),
+        ("Per Day", _format_inr(per_day_budget)),
+        ("Transport", _normalize_pref_value(recommended_transport)),
+        ("Stay", _normalize_pref_value(recommended_hotel)),
+    ]
+
+    stat_html = "".join(
+        [
+            "<div class='budget-chat-stat'>"
+            f"<span class='budget-chat-label'>{escape(label)}</span>"
+            f"<span class='budget-chat-value'>{escape(value)}</span>"
+            "</div>"
+            for label, value in stats
+        ]
+    )
+
+    color_map = {
+        "hotel": "#2563eb",
+        "transport": "#d97706",
+        "food": "#0ea5a4",
+        "activities": "#059669",
+        "misc": "#dc2626",
+    }
+    bars = []
+    for category, amount in allocation.items():
+        percent = int((int(amount) / int(total_budget)) * 100) if total_budget else 0
+        color = color_map.get(category.lower(), "#2563eb")
+        bars.append(
+            "<div class='budget-chat-bar'>"
+            "<div class='budget-chat-bar-top'>"
+            f"<span class='budget-chat-bar-name'>{escape(str(category))}</span>"
+            f"<span class='budget-chat-bar-value'>{escape(_format_inr(amount))} · {percent}%</span>"
+            "</div>"
+            "<div class='budget-chat-track'>"
+            f"<div class='budget-chat-fill' style='width:{percent}%;background:{color};'></div>"
+            "</div>"
+            "</div>"
+        )
+
+    inputs_used = payload.get("inputs_used", {})
+    note_parts = []
+    if isinstance(inputs_used, dict):
+        if inputs_used.get("preferred_transport"):
+            note_parts.append(
+                f"Transport: {_normalize_pref_value(inputs_used.get('preferred_transport'))}"
+            )
+        if inputs_used.get("hotel_category"):
+            note_parts.append(
+                f"Hotel: {_normalize_pref_value(inputs_used.get('hotel_category'))}"
+            )
+
+    note_html = (
+        f"<div class='budget-chat-note'>{escape(' | '.join(note_parts))}</div>"
+        if note_parts else ""
+    )
+
+    return (
+        "<div class='budget-chat'>"
+        "<div class='budget-chat-head'>"
+        "<div class='budget-chat-kicker'>Budget Optimizer</div>"
+        f"<div class='budget-chat-title'>{destination}</div>"
+        "<div class='budget-chat-sub'>Smart allocation across stay, transport, food, activities, and miscellaneous costs.</div>"
+        "</div>"
+        f"<div class='budget-chip-row'>{''.join(chips)}</div>"
+        f"<div class='budget-chat-grid'>{stat_html}</div>"
+        f"<div class='budget-chat-bars'>{''.join(bars)}</div>"
+        f"{note_html}"
+        "</div>"
+    )
+
+
+def _assistant_response_to_html(raw) -> str:
+    payload = _coerce_response_payload(raw)
+    budget_html = _budget_response_to_html(payload)
+    if budget_html:
+        return budget_html
+
+    trip_html = _trip_response_to_html(payload)
+    if trip_html:
+        return trip_html
+
+    bot_text = _format_assistant_response(payload)
+    return _to_pretty_html(bot_text)
+
+
+def _format_inr(value) -> str:
+    try:
+        return f"Rs {int(value):,}"
+    except Exception:
+        return "Not set"
+
+
+def _normalize_pref_value(value, default: str = "Not set") -> str:
+    if value in (None, ""):
+        return default
+    return str(value).replace("_", " ").title()
+
+
+def _render_saved_preferences_summary(existing: dict):
+    if not existing:
+        st.markdown(
+            """
+            <div class="pref-summary">
+                <div class="pref-summary-head">
+                    <div>
+                        <div class="pref-summary-kicker">Saved Profile</div>
+                        <div class="pref-summary-title">No preferences saved yet</div>
+                        <div class="pref-summary-sub">
+                            Save your default travel style once, and it will appear here for quick reference before you edit the form.
+                        </div>
+                    </div>
+                </div>
+                <div class="pref-summary-empty">
+                    Your profile summary will show trip type, transport, hotel style, food preference, climate, and budget range.
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+        return
+
+    budget_min = existing.get("budget_min")
+    budget_max = existing.get("budget_max")
+
+    summary_items = [
+        ("Trip Type", _normalize_pref_value(existing.get("preferred_trip_type"))),
+        ("Transport", _normalize_pref_value(existing.get("preferred_transport"))),
+        ("Hotel", _normalize_pref_value(existing.get("preferred_hotel_type"))),
+        ("Food", _normalize_pref_value(existing.get("food_preference"))),
+        ("Climate", _normalize_pref_value(existing.get("preferred_climate"))),
+        ("Budget Range", f"{_format_inr(budget_min)} to {_format_inr(budget_max)}"),
+    ]
+
+    cards_html = "".join(
+        [
+            "<div class='pref-summary-item'>"
+            f"<span class='pref-summary-label'>{escape(label)}</span>"
+            f"<span class='pref-summary-value'>{escape(value)}</span>"
+            "</div>"
+            for label, value in summary_items
+        ]
+    )
+
+    st.markdown(
+        f"""
+        <div class="pref-summary">
+            <div class="pref-summary-head">
+                <div>
+                    <div class="pref-summary-kicker">Saved Profile</div>
+                    <div class="pref-summary-title">Your current travel defaults</div>
+                    <div class="pref-summary-sub">
+                        These are the saved preferences the planner will use as your baseline profile.
+                    </div>
+                </div>
+                <div class="pref-summary-badge">Saved on server</div>
+            </div>
+            <div class="pref-summary-grid">{cards_html}</div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
 
 def _to_pretty_html(text: str) -> str:
@@ -1651,12 +2508,17 @@ def render_preferences():
         "Save your default travel profile to personalize future itinerary generation."
     )
 
+    saved_banner = st.session_state.pop("pref_saved_banner", None)
     existing, code = api_get(f"/my-preferences/{st.session_state.user_id}")
     if code == 200:
-        show_success("Preferences loaded from server")
+        show_success(saved_banner or "Preferences loaded from server")
         st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
     else:
         existing = {}
+        if saved_banner:
+            show_success(saved_banner)
+
+    _render_saved_preferences_summary(existing)
 
     with st.container(border=True):
         with st.form("pref_form"):
@@ -1689,7 +2551,8 @@ def render_preferences():
                     "budget_min": int(pref_bmin), "budget_max": int(pref_bmax),
                 })
                 if code == 200:
-                    show_success(data.get("message", "Saved!"))
+                    st.session_state["pref_saved_banner"] = data.get("message", "Saved!")
+                    st.rerun()
                 else:
                     show_error(data.get("detail", "Failed to save"))
 
@@ -1729,8 +2592,10 @@ def render_conversations():
         tool = convo.get("tool_used", "")
         with st.expander(f"💬 {convo['user_message'][:70]}... · {ts}"):
             st.markdown(f'<div class="user-bubble">{escape(str(convo["user_message"]))}</div>', unsafe_allow_html=True)
-            formatted = _format_assistant_response(convo.get("assistant_response", ""))
-            st.markdown(f'<div class="bot-bubble">{_to_pretty_html(formatted)}</div>', unsafe_allow_html=True)
+            st.markdown(
+                f'<div class="bot-bubble">{_assistant_response_to_html(convo.get("assistant_response", ""))}</div>',
+                unsafe_allow_html=True
+            )
             if tool:
                 st.markdown(f'<span class="badge-info">🛠 Tool: {tool}</span>', unsafe_allow_html=True)
 

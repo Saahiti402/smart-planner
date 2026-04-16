@@ -82,10 +82,14 @@ def optimize_budget(
 
     return {
         "destination": destination,
+        "total_budget": total_budget,
         "recommended_hotel": hotel_type,
         "recommended_transport": transport_type,
         "budget_allocation": budget_allocation,
         "per_person_budget": round(total_budget / travelers),
+        "per_day_budget": round(total_budget / trip_days),
         "trip_days": trip_days,
-        "travelers": travelers
+        "travelers": travelers,
+        "hotel_category": hotel_category,
+        "preferred_transport": preferred_transport
     }

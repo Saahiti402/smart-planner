@@ -45,7 +45,14 @@ from app.services.langchain_service import query_travel_assistant
 from app.services.external_travel_service import _fetch_weather_data, _fetch_activities_data, _fetch_flights_data
 from typing import Optional
 from pydantic import BaseModel
-from app.services.ask_travel_router import route_travel_query
+from app.services.ask_travel_router import (
+    extract_destination_from_query,
+    extract_trip_days,
+    is_budget_query,
+    is_itinerary_query,
+    is_trip_management_query,
+    route_travel_query,
+)
 from langsmith.run_helpers import traceable
 
 class ExternalTravelToolRequest(BaseModel):
@@ -95,8 +102,20 @@ def external_travel_tool(request: ExternalTravelToolRequest):
             "type": "hotels",
             "data": _fetch_hotels_data(request.city, request.check_in, request.check_out)
         }
-        
+
     return {"error": "Invalid payload type."}
+
+
+@app.post("/optimize-budget")
+def optimize_budget_structured(data: dict):
+    return optimize_budget(
+        destination=data["destination"],
+        total_budget=int(data["budget"]),
+        travelers=int(data.get("travelers", 1)),
+        trip_days=int(data.get("trip_days", 1)),
+        preferred_transport=data.get("preferred_transport", "flight"),
+        hotel_category=data.get("hotel_category", "3-star")
+    )
 
 # ---------------- CORS FIX ----------------
 app.add_middleware(
@@ -400,42 +419,37 @@ def ask_travel(
         )
 
     query_lower = query.lower().strip()
+    user_preferences = None
+    if user.preferences:
+        user_preferences = {
+            "budget_min": user.preferences.budget_min,
+            "budget_max": user.preferences.budget_max,
+            "preferred_transport": user.preferences.preferred_transport,
+            "preferred_hotel_type": user.preferences.preferred_hotel_type,
+            "preferred_trip_type": user.preferences.preferred_trip_type,
+            "food_preference": user.preferences.food_preference,
+            "preferred_climate": user.preferences.preferred_climate,
+        }
 
     # =====================================================
     # STEP 2: TRIP PLANNING / ITINERARY
     # IMPORTANT: MUST COME BEFORE GENERIC "trip"
     # =====================================================
-    if any(
-        keyword in query_lower
-        for keyword in [
-            "plan trip",
-            "trip plan",
-            "travel plan",
-            "itinerary",
-            "3 day",
-            "5 day",
-            "day trip"
-        ]
-    ):
-        destination = "Goa"
-
-        supported_destinations = [
-            "goa",
-            "mysore",
-            "chennai",
-            "mumbai",
-            "switzerland",
-            "delhi"
-        ]
-
-        for city in supported_destinations:
-            if city in query_lower:
-                destination = city.capitalize()
-                break
+    if is_itinerary_query(query):
+        destination = extract_destination_from_query(
+            query_lower,
+            default="goa"
+        ).title()
+        trip_days = extract_trip_days(
+            query_lower,
+            default=3
+        )
 
         today = datetime.now().date()
         start_date = today + timedelta(days=1)
-        end_date = start_date + timedelta(days=3)
+        end_date = start_date + timedelta(
+            days=max(trip_days - 1, 0)
+        )
 
         trip_data = {
             "user_id": str(user.id),
@@ -454,7 +468,12 @@ def ask_travel(
 
         routed_response = route_travel_query(
             query=query,
-            role=user.role
+            role=user.role,
+            destination=destination,
+            start_date=trip_data["start_date"],
+            end_date=trip_data["end_date"],
+            trip_days=trip_days,
+            preferences=user_preferences
         )
 
         itinerary_text = routed_response.get(
@@ -540,16 +559,9 @@ def ask_travel(
     # =====================================================
     # STEP 5: TRIP HISTORY / STATUS
     # =====================================================
-    elif any(
-        keyword in query_lower
-        for keyword in [
-            "trip",
-            "trips",
-            "planned",
-            "past",
-            "current",
-            "status"
-        ]
+    elif (
+        not is_budget_query(query)
+        and is_trip_management_query(query)
     ):
         response = query_user_trips(
             db,
@@ -565,7 +577,8 @@ def ask_travel(
     else:
         routed_response = route_travel_query(
             query=query,
-            role=user.role
+            role=user.role,
+            preferences=user_preferences
         )
 
         response = routed_response.get(

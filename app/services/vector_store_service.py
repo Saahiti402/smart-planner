@@ -16,7 +16,10 @@ def get_collection():
 
 def rebuild_vector_store():
     existing_collections = client.list_collections()
-    existing_names = [c.name for c in existing_collections]
+    existing_names = [
+        c if isinstance(c, str) else c.name
+        for c in existing_collections
+    ]
 
     if COLLECTION_NAME in existing_names:
         client.delete_collection(COLLECTION_NAME)

@@ -1,20 +1,2 @@
-bcrypt<4.0
-chromadb
-email-validator
-fastapi
-groq
-langchain
-langchain-community
-langchain-core
-langchain-text-splitters
-langsmith
-passlib>=1.7.4,<1.8
-psycopg2-binary
-pypdf
-python-dotenv
-python-jose[cryptography]
-requests
-sentence-transformers
-sqlalchemy
-streamlit
-uvicorn
+-r requirements.backend.txt
+-r requirements.frontend.txt

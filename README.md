@@ -8,6 +8,8 @@ This project is ready to run as a three-container stack in Docker Desktop:
 - `backend`: FastAPI API on `http://localhost:8000`
 - `db`: PostgreSQL database on `localhost:5432`
 
+The Docker build is optimized so the frontend and backend no longer install the same Python stack. The Streamlit image installs only UI dependencies, while the backend image installs the API, Chroma, and embedding dependencies.
+
 ### Before you start
 
 Make sure the project has a local `.env` file with the API keys the backend needs. Docker Compose will automatically use those values and will override `DATABASE_URL` so the app talks to the bundled PostgreSQL container instead of an external database.
@@ -27,7 +29,7 @@ In Docker Desktop, you can also open this folder and start the `docker-compose.y
 
 ### First start notes
 
-The backend may take a little longer on its first run because `sentence-transformers` may need to download the `all-MiniLM-L6-v2` model.
+The backend may take a little longer on its first run because `sentence-transformers` may need to download the `all-MiniLM-L6-v2` model. The downloaded Hugging Face cache is persisted in a Docker volume so future restarts are much faster.
 
 If your local `chroma_db` folder is empty, you can rebuild the vector store after startup:
 

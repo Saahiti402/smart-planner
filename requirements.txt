@@ -5,8 +5,8 @@ psycopg2-binary
 python-dotenv
 email-validator
 langchain
+langchain-community
 chromadb
 sentence-transformers
 python-jose[cryptography]
-langchain
-langchain-community
+groq

@@ -33,6 +33,7 @@ from app.schemas import (
     TripPlanSchema,
     UserPreferenceSchema,
     DestinationCompareSchema,
+    BudgetOptimizeSchema,
 )
 from app.auth import hash_password, verify_password
 from app.services.rag_ingestion_service import load_and_chunk_documents
@@ -606,6 +607,26 @@ def ask_travel(
 
 
 # Budget Optimization with Natural Language Input
+@app.post("/optimize-budget")
+def optimize_budget_structured(payload: BudgetOptimizeSchema):
+    destination = payload.destination.strip()
+
+    if not destination:
+        raise HTTPException(
+            status_code=400,
+            detail="Destination is required"
+        )
+
+    return optimize_budget(
+        destination=destination,
+        total_budget=payload.budget,
+        travelers=payload.travelers,
+        trip_days=payload.trip_days,
+        preferred_transport=payload.preferred_transport.strip().lower(),
+        hotel_category=payload.hotel_category.strip().lower(),
+    )
+
+
 @app.post("/optimize-budget-nl")
 def optimize_budget_natural_language(query: dict):
 

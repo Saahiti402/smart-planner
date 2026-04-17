@@ -26,6 +26,10 @@ class TestBudgetOptimizer(unittest.TestCase):
         result = optimize_budget("Kerala", 40000, 4, 4)
         self.assertEqual(result["per_person_budget"], 10000)
 
+    def test_per_day_budget(self):
+        result = optimize_budget("Goa", 50000, 2, 5)
+        self.assertEqual(result["per_day_budget"], 10000)
+
     def test_short_trip(self):
         result = optimize_budget("Goa", 30000, 2, 2)
         self.assertIn("budget_allocation", result)

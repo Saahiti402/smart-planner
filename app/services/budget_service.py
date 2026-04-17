@@ -86,6 +86,7 @@ def optimize_budget(
         "recommended_transport": transport_type,
         "budget_allocation": budget_allocation,
         "per_person_budget": round(total_budget / travelers),
+        "per_day_budget": round(total_budget / trip_days),
         "trip_days": trip_days,
         "travelers": travelers
     }

@@ -1,3 +1,4 @@
+import os
 import streamlit as st
 import requests
 import json
@@ -9,7 +10,7 @@ from html import escape
 # ─────────────────────────────────────────────────────────────
 # CONFIG
 # ─────────────────────────────────────────────────────────────
-BASE_URL = "http://127.0.0.1:8000"
+BASE_URL = os.getenv("BACKEND_BASE_URL", "http://127.0.0.1:8000").rstrip("/")
 
 st.set_page_config(
     page_title="Smart Travel Planner 🌍",
@@ -659,7 +660,12 @@ def api_post(endpoint, payload):
         r = requests.post(f"{BASE_URL}{endpoint}", json=payload, timeout=120)
         return r.json(), r.status_code
     except requests.exceptions.ConnectionError:
-        return {"error": "Cannot connect to backend. Make sure FastAPI is running on port 8000."}, 503
+        return {
+            "error": (
+                f"Cannot connect to backend at {BASE_URL}. "
+                "Make sure the FastAPI service is running and reachable."
+            )
+        }, 503
     except Exception as e:
         return {"error": str(e)}, 500
 
@@ -668,7 +674,12 @@ def api_get(endpoint, params=None):
         r = requests.get(f"{BASE_URL}{endpoint}", params=params, timeout=120)
         return r.json(), r.status_code
     except requests.exceptions.ConnectionError:
-        return {"error": "Cannot connect to backend. Make sure FastAPI is running on port 8000."}, 503
+        return {
+            "error": (
+                f"Cannot connect to backend at {BASE_URL}. "
+                "Make sure the FastAPI service is running and reachable."
+            )
+        }, 503
     except Exception as e:
         return {"error": str(e)}, 500
 
@@ -1366,7 +1377,9 @@ def render_budget():
                     if code == 200 and "error" not in data:
                         _render_budget_result(data, b_budget)
                     else:
-                        show_error(data.get("error", "Optimization failed"))
+                        show_error(
+                            data.get("error", data.get("detail", "Optimization failed"))
+                        )
 
     with tab_nl:
         st.markdown('<div class="stp-card"><div style="font-size:13px;color:#60707f;">Describe your trip in plain English. Example: 4-day Manali trip for 3 people under ₹45,000 by train.</div></div>', unsafe_allow_html=True)

@@ -1,0 +1,14 @@
+.env
+.git
+.gitignore
+.idea
+.pytest_cache
+.vscode
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+chroma_db/
+tests/
+venv/
+.venv/

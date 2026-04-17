@@ -34,3 +34,12 @@ class UserPreferenceSchema(BaseModel):
 
 class DestinationCompareSchema(BaseModel):
     destinations: list[str]
+
+
+class BudgetOptimizeSchema(BaseModel):
+    destination: str
+    budget: int
+    travelers: int = 1
+    trip_days: int = 1
+    preferred_transport: str = "flight"
+    hotel_category: str = "3-star"

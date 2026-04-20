@@ -319,6 +319,133 @@ st.markdown("""
         text-transform: uppercase;
         letter-spacing: .05em;
     }
+    .trip-plan-card {
+        overflow: hidden;
+    }
+    .trip-plan-head {
+        background: linear-gradient(135deg, #0f172a, #1e3a8a);
+        color: #f8fafc;
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 14px;
+    }
+    .trip-plan-kicker {
+        color: #93c5fd;
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+        margin-bottom: 5px;
+    }
+    .trip-plan-title {
+        font-family: 'Manrope', sans-serif;
+        font-size: 22px;
+        line-height: 1.25;
+        font-weight: 800;
+        margin-bottom: 10px;
+    }
+    .trip-plan-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    .trip-chip {
+        background: rgba(255, 255, 255, 0.12);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 999px;
+        color: #e0f2fe;
+        font-size: 12px;
+        font-weight: 700;
+        padding: 5px 9px;
+    }
+    .trip-day-card {
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        box-shadow: 0 6px 16px rgba(15, 23, 42, 0.06);
+        margin-bottom: 12px;
+        overflow: hidden;
+    }
+    .trip-day-title {
+        background: #f8fafc;
+        border-bottom: 1px solid var(--line);
+        color: #0f172a;
+        font-family: 'Manrope', sans-serif;
+        font-size: 15px;
+        font-weight: 800;
+        padding: 10px 13px;
+    }
+    .trip-slot {
+        display: grid;
+        grid-template-columns: 118px minmax(0, 1fr);
+        gap: 12px;
+        padding: 12px 13px;
+        border-bottom: 1px solid #eef2f7;
+    }
+    .trip-slot:last-child {
+        border-bottom: 0;
+    }
+    .trip-slot-label {
+        color: #1d4ed8;
+        font-size: 12px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+    }
+    .trip-slot-text {
+        color: #1f2937;
+        font-size: 14px;
+        line-height: 1.62;
+    }
+    .trip-budget {
+        background: #f8fafc;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 12px 13px;
+        margin-top: 13px;
+    }
+    .trip-budget-title {
+        color: #0f172a;
+        font-weight: 800;
+        margin-bottom: 8px;
+    }
+    .trip-budget-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+    }
+    .trip-budget-item {
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 8px 10px;
+    }
+    .trip-budget-label {
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+    }
+    .trip-budget-value {
+        color: #0f172a;
+        font-size: 14px;
+        font-weight: 800;
+        margin-top: 2px;
+    }
+    @media (max-width: 720px) {
+        .user-bubble, .bot-bubble {
+            margin-left: 0;
+            margin-right: 0;
+        }
+        .trip-slot {
+            grid-template-columns: 1fr;
+            gap: 4px;
+        }
+        .trip-budget-grid {
+            grid-template-columns: 1fr;
+        }
+    }
 
     .budget-bar-wrap { margin-bottom: 12px; }
     .budget-bar-label {
@@ -1050,39 +1177,7 @@ def _format_assistant_response(raw):
             # TRIP PLANNING RESPONSE
             # ==========================
             if "trip_id" in value and "itinerary" in value:
-                output = []
-
-                output.append(
-                    f"Trip ID: {value.get('trip_id')}"
-                )
-
-                output.append(
-                    f"Destination: {value.get('destination')}"
-                )
-
-                output.append(
-                    f"Status: {value.get('status')}"
-                )
-
-                output.append(
-                    f"Dates: {value.get('start_date')} to {value.get('end_date')}"
-                )
-
-                itinerary = value.get("itinerary", {})
-
-                if isinstance(itinerary, dict):
-                    output.append("\nDay-wise Plan:")
-
-                    for day, details in itinerary.items():
-                        output.append(f"\n{day.upper()}")
-
-                        if isinstance(details, dict):
-                            for slot, plan in details.items():
-                                output.append(
-                                    f"• {slot.capitalize()}: {plan}"
-                                )
-
-                return "\n".join(output)
+                return value
 
             # ==========================
             # GENERIC TOOL RESPONSE
@@ -1110,7 +1205,136 @@ def _format_assistant_response(raw):
     return result if result else "No response available."
 
 
-def _to_pretty_html(text: str) -> str:
+def _titleize_key(value) -> str:
+    return str(value).replace("_", " ").replace("-", " ").title()
+
+
+def _format_money(value) -> str:
+    try:
+        return f"INR {int(value):,}"
+    except Exception:
+        return str(value)
+
+
+def _sort_itinerary_days(itinerary: dict):
+    def day_number(item):
+        key, _ = item
+        match = re.search(r"(\d+)", str(key))
+        return int(match.group(1)) if match else 999
+
+    return sorted(itinerary.items(), key=day_number)
+
+
+def _trip_response_to_html(value: dict) -> str:
+    itinerary = value.get("itinerary") or {}
+    recommendations = value.get("recommendations") or {}
+    budget = recommendations.get("budget_breakdown") or {}
+
+    destination = value.get("destination") or "Trip"
+    start_date = value.get("start_date") or "Start date"
+    end_date = value.get("end_date") or "End date"
+    status = value.get("status") or "planned"
+    trip_id = str(value.get("trip_id") or "")
+
+    total_days = recommendations.get("total_days")
+    if not total_days and isinstance(itinerary, dict):
+        total_days = len(itinerary)
+
+    title_prefix = f"{total_days}-Day " if total_days else ""
+    title = f"{title_prefix}{destination} Itinerary"
+
+    chips = [
+        f"Dates: {start_date} to {end_date}",
+        f"Status: {_titleize_key(status)}",
+    ]
+
+    if trip_id:
+        chips.append(f"Trip ID: {trip_id[:8]}")
+
+    for key in ["travelers", "transport", "hotel", "food_preference", "trip_type"]:
+        if recommendations.get(key):
+            chips.append(f"{_titleize_key(key)}: {_titleize_key(recommendations[key])}")
+
+    chip_html = "".join(
+        f"<span class='trip-chip'>{escape(str(chip))}</span>"
+        for chip in chips
+    )
+
+    html = [
+        "<div class='trip-plan-card'>",
+        "<div class='trip-plan-head'>",
+        "<div class='trip-plan-kicker'>AI trip plan</div>",
+        f"<div class='trip-plan-title'>{escape(title)}</div>",
+        f"<div class='trip-plan-meta'>{chip_html}</div>",
+        "</div>",
+    ]
+
+    if isinstance(itinerary, dict) and itinerary:
+        slot_order = ["morning", "afternoon", "evening"]
+        for day_key, details in _sort_itinerary_days(itinerary):
+            day_match = re.search(r"(\d+)", str(day_key))
+            day_title = f"Day {day_match.group(1)}" if day_match else _titleize_key(day_key)
+            html.append("<div class='trip-day-card'>")
+            html.append(f"<div class='trip-day-title'>{escape(day_title)}</div>")
+
+            if isinstance(details, dict):
+                ordered_slots = [
+                    slot for slot in slot_order
+                    if slot in details and details.get(slot)
+                ]
+                ordered_slots.extend(
+                    slot for slot in details
+                    if slot not in ordered_slots and details.get(slot)
+                )
+
+                for slot in ordered_slots:
+                    html.append("<div class='trip-slot'>")
+                    html.append(
+                        f"<div class='trip-slot-label'>{escape(_titleize_key(slot))}</div>"
+                    )
+                    html.append(
+                        f"<div class='trip-slot-text'>{escape(str(details.get(slot)))}</div>"
+                    )
+                    html.append("</div>")
+            else:
+                html.append("<div class='trip-slot'>")
+                html.append("<div class='trip-slot-label'>Plan</div>")
+                html.append(f"<div class='trip-slot-text'>{escape(str(details))}</div>")
+                html.append("</div>")
+
+            html.append("</div>")
+
+    if budget:
+        budget_labels = {
+            "hotel_per_night": "Hotel / Night",
+            "hotel_total": "Hotel Total",
+            "transport": "Transport",
+            "food": "Food",
+            "misc": "Misc",
+            "grand_total": "Total",
+        }
+
+        budget_items = []
+        for key in ["grand_total", "hotel_total", "hotel_per_night", "transport", "food", "misc"]:
+            if key in budget:
+                budget_items.append(
+                    "<div class='trip-budget-item'>"
+                    f"<div class='trip-budget-label'>{escape(budget_labels.get(key, _titleize_key(key)))}</div>"
+                    f"<div class='trip-budget-value'>{escape(_format_money(budget[key]))}</div>"
+                    "</div>"
+                )
+
+        if budget_items:
+            html.append("<div class='trip-budget'>")
+            html.append("<div class='trip-budget-title'>Budget Snapshot</div>")
+            html.append(f"<div class='trip-budget-grid'>{''.join(budget_items)}</div>")
+            html.append("</div>")
+
+    html.append("</div>")
+    return "".join(html)
+
+
+def _to_pretty_html(text) -> str:
     """Render assistant text in a more readable and user-friendly format."""
     def _inline_markdown_to_html(line: str) -> str:
         safe = escape(line)
@@ -1118,21 +1342,24 @@ def _to_pretty_html(text: str) -> str:
         safe = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", safe)
         return safe
 
+    if isinstance(text, dict):
+        if "trip_id" in text and "itinerary" in text:
+            return _trip_response_to_html(text)
+        return "".join(
+            f"<div class='resp-line'><strong>{escape(_titleize_key(key))}:</strong> "
+            f"{_to_pretty_html(val)}</div>"
+            for key, val in text.items()
+        )
+
+    if isinstance(text, list):
+        items = "".join(
+            f"<div class='resp-item'>{_to_pretty_html(item)}</div>"
+            for item in text
+        )
+        return f"<div class='resp-list'>{items}</div>"
+
     if not isinstance(text, str):
-        text = value.strip()
-        if not text:
-            return ""
-        if text.startswith("{") or text.startswith("["):
-            try:
-                parsed = json.loads(text)
-                return parse_payload(parsed, depth + 1)
-            except Exception:
-                try:
-                    parsed = ast.literal_eval(text)
-                    return parse_payload(parsed, depth + 1)
-                except Exception:
-                    return text
-        return text
+        return escape(str(text))
 
     cleaned = text.strip()
     if not cleaned:

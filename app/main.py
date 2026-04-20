@@ -1,5 +1,7 @@
+import re
 import uuid
 from datetime import datetime, timedelta
+from types import SimpleNamespace
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, Depends, HTTPException
@@ -58,6 +60,144 @@ class ExternalTravelToolRequest(BaseModel):
     city: Optional[str] = None
     check_in: Optional[str] = None
     check_out: Optional[str] = None
+
+SUPPORTED_TRIP_DESTINATIONS = [
+    "goa",
+    "mysore",
+    "chennai",
+    "mumbai",
+    "switzerland",
+    "delhi",
+    "bangalore",
+    "kerala",
+    "manali",
+    "rajasthan",
+    "agra",
+    "jaipur",
+]
+
+NUMBER_WORDS = {
+    "one": 1,
+    "two": 2,
+    "three": 3,
+    "four": 4,
+    "five": 5,
+    "six": 6,
+    "seven": 7,
+    "eight": 8,
+    "nine": 9,
+    "ten": 10,
+}
+
+
+def _is_trip_planning_query(query_lower: str) -> bool:
+    planning_phrases = [
+        "plan trip",
+        "plan a trip",
+        "plan my trip",
+        "trip plan",
+        "travel plan",
+        "itinerary",
+        "day trip",
+        "vacation plan",
+        "tour plan",
+    ]
+
+    if any(phrase in query_lower for phrase in planning_phrases):
+        return True
+
+    return bool(
+        re.search(r"\b\d+\s*[- ]?\s*days?\b", query_lower)
+        and any(word in query_lower for word in ["trip", "travel", "tour"])
+    )
+
+
+def _extract_destination(query_lower: str) -> str:
+    for city in SUPPORTED_TRIP_DESTINATIONS:
+        if re.search(rf"\b(?:to|in|for)\s+{re.escape(city)}\b", query_lower):
+            return city.title()
+
+    for city in SUPPORTED_TRIP_DESTINATIONS:
+        if re.search(rf"\b{re.escape(city)}\b", query_lower):
+            return city.title()
+
+    return "Goa"
+
+
+def _extract_source(query_lower: str) -> str:
+    match = re.search(r"\bfrom\s+([a-z ]+?)\s+to\s+", query_lower)
+    if match:
+        source = match.group(1).strip()
+        if source:
+            return source.title()
+
+    return "Bangalore"
+
+
+def _extract_trip_days(query_lower: str) -> int:
+    match = re.search(r"\b(\d+)\s*[- ]?\s*days?\b", query_lower)
+    if match:
+        return max(1, min(int(match.group(1)), 30))
+
+    for word, value in NUMBER_WORDS.items():
+        if re.search(rf"\b{word}\s*[- ]?\s*days?\b", query_lower):
+            return value
+
+    if "weekend" in query_lower:
+        return 2
+
+    if "day trip" in query_lower:
+        return 1
+
+    return 3
+
+
+def _parse_budget_amount(raw_amount: str) -> int:
+    amount = raw_amount.lower().replace(",", "").strip()
+    multiplier = 1
+
+    if amount.endswith("k"):
+        multiplier = 1000
+        amount = amount[:-1].strip()
+    elif "lakh" in amount:
+        multiplier = 100000
+        amount = amount.replace("lakhs", "").replace("lakh", "").strip()
+
+    try:
+        return max(1, int(float(amount) * multiplier))
+    except ValueError:
+        return 15000
+
+
+def _extract_budget(query_lower: str) -> int:
+    match = re.search(
+        r"\b(?:budget|under|below|within|around|rs\.?|inr)\s*"
+        r"([0-9][0-9,]*(?:\.\d+)?\s*(?:k|lakhs?)?)",
+        query_lower
+    )
+    if match:
+        return _parse_budget_amount(match.group(1))
+
+    shorthand = re.search(r"\b([0-9][0-9,]*(?:\.\d+)?\s*(?:k|lakhs?))\b", query_lower)
+    if shorthand:
+        return _parse_budget_amount(shorthand.group(1))
+
+    return 15000
+
+
+def _extract_travelers(query_lower: str) -> int:
+    match = re.search(
+        r"\bfor\s+(\d+)\s*(?:people|persons|travellers|travelers|pax|members)\b",
+        query_lower
+    )
+    if match:
+        return max(1, min(int(match.group(1)), 50))
+
+    if re.search(r"\bsolo\b|\balone\b", query_lower):
+        return 1
+
+    return 1
+
 
 app = FastAPI(title="Smart Travel Planner Backend")
 
@@ -406,46 +546,25 @@ def ask_travel(
     # STEP 2: TRIP PLANNING / ITINERARY
     # IMPORTANT: MUST COME BEFORE GENERIC "trip"
     # =====================================================
-    if any(
-        keyword in query_lower
-        for keyword in [
-            "plan trip",
-            "trip plan",
-            "travel plan",
-            "itinerary",
-            "3 day",
-            "5 day",
-            "day trip"
-        ]
-    ):
-        destination = "Goa"
-
-        supported_destinations = [
-            "goa",
-            "mysore",
-            "chennai",
-            "mumbai",
-            "switzerland",
-            "delhi"
-        ]
-
-        for city in supported_destinations:
-            if city in query_lower:
-                destination = city.capitalize()
-                break
+    if _is_trip_planning_query(query_lower):
+        destination = _extract_destination(query_lower)
+        source = _extract_source(query_lower)
+        trip_days = _extract_trip_days(query_lower)
+        budget = _extract_budget(query_lower)
+        travelers = _extract_travelers(query_lower)
 
         today = datetime.now().date()
         start_date = today + timedelta(days=1)
-        end_date = start_date + timedelta(days=3)
+        end_date = start_date + timedelta(days=trip_days - 1)
 
         trip_data = {
             "user_id": str(user.id),
-            "source": "Bangalore",
+            "source": source,
             "destination": destination,
             "start_date": start_date.strftime("%Y-%m-%d"),
             "end_date": end_date.strftime("%Y-%m-%d"),
-            "budget": 15000,
-            "travelers": 1
+            "budget": budget,
+            "travelers": travelers
         }
 
         created_trip = create_trip(
@@ -453,28 +572,28 @@ def ask_travel(
             trip_data
         )
 
-        routed_response = route_travel_query(
-            query=query,
-            role=user.role
+        trip_request = SimpleNamespace(
+            user_id=str(user.id),
+            source_location=source,
+            destination=destination,
+            start_date=trip_data["start_date"],
+            end_date=trip_data["end_date"],
+            budget=budget,
+            travelers_count=travelers,
+            role=user.role,
         )
 
-        itinerary_text = routed_response.get(
-            "response",
-            routed_response
-        )
-
-        recommendations = routed_response.get(
-            "recommendations",
-            []
+        generated_itinerary, recommendations, decision_log = (
+            travel_planning_agent(trip_request)
         )
 
         # Save itinerary if table/model exists
         try:
             itinerary_record = Itinerary(
                 trip_id=created_trip.id,
-                day_plan=str(itinerary_text),
+                day_plan=generated_itinerary,
                 estimated_cost=created_trip.budget,
-                recommendations=str(recommendations),
+                recommendations=recommendations,
                 generated_by_agent=True
             )
 
@@ -490,8 +609,9 @@ def ask_travel(
             "status": created_trip.status,
             "start_date": str(created_trip.start_date),
             "end_date": str(created_trip.end_date),
-            "itinerary": itinerary_text,
-            "recommendations": recommendations
+            "itinerary": generated_itinerary,
+            "recommendations": recommendations,
+            "agent_decision": decision_log,
         }
 
         tool_used = "trip_planning"
